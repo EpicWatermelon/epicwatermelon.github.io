@@ -406,7 +406,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.42');
+  assert.equal(packageJson.version, '0.1.43');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -627,6 +627,34 @@ test('locks the contact title after restoring its slogan from the final lyric', 
   assert.equal(trigger.innerHTML, originalTitle);
   listeners.click();
   assert.equal(trigger.innerHTML, originalTitle);
+});
+
+test('restores the Chinese slogan when the visitor switches languages before unlocking', () => {
+  const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const englishTitle = 'Fata viam<br /><i>invenient.</i>';
+  const chineseTitle = '道阻且长<br /><i>行则将至。</i>';
+  let titleHtml = englishTitle;
+  let titleText = 'Fata viam invenient.';
+  const trigger = {
+    get textContent() { return titleText; },
+    set textContent(value) { titleText = value; titleHtml = value; },
+    get innerHTML() { return titleHtml; },
+    set innerHTML(value) { titleHtml = value; titleText = value; },
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const document = {
+    documentElement: { lang: 'en' },
+    querySelector(selector) {
+      return selector === '[data-contact-easter-egg-trigger]' ? trigger : null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  document.documentElement.lang = 'zh-CN';
+  trigger.innerHTML = chineseTitle;
+  for (let click = 0; click < contactEasterEggLyrics.length + 5; click += 1) listeners.click();
+  assert.equal(trigger.innerHTML, chineseTitle);
 });
 
 test('keeps Education as a distinct part of the Background chapter', () => {

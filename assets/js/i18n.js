@@ -316,13 +316,14 @@
     const trigger = document.querySelector('[data-contact-easter-egg-trigger]');
     if (!trigger) return null;
 
-    const originalTitle = trigger.innerHTML;
+    let originalTitle = null;
     let clickCount = 0;
     let lyricIndex = 0;
     let isLocked = false;
     const revealOrRotate = () => {
       if (document.documentElement.lang !== 'zh-CN' || isLocked) return;
       if (clickCount < 5) {
+        if (clickCount === 0) originalTitle = trigger.innerHTML;
         clickCount += 1;
         if (clickCount < 5) return;
         trigger.textContent = contactEasterEggLyrics[lyricIndex];
