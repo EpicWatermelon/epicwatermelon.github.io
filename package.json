@@ -1,0 +1,9 @@
+{
+  "name": "zhengji-liu-living-cv",
+  "version": "0.1.40",
+  "private": true,
+  "description": "Zhengji Liu's animated one-page portfolio.",
+  "scripts": {
+    "test": "node --test tests/dynamic-cv-preview.test.mjs"
+  }
+}

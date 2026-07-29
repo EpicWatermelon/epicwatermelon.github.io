@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en" data-motion-variant="scroll-starlight">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Zhengji Liu — Image Processing Engineer working across industrial vision and ophthalmic imaging." data-i18n-content="meta.description" />
+    <title data-i18n="meta.title">Zhengji Liu — Image Processing Engineer / Researcher</title>
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700;6..96,800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/dynamic-cv.css?v=0.1.40" />
+    <script src="assets/js/i18n.js?v=0.1.40" defer></script>
+    <script src="assets/js/dynamic-cv.js?v=0.1.40" defer></script>
+  </head>
+  <body data-active-chapter="home" data-scroll-motion="enabled">
+    <a class="skip-link" href="#main-content" data-i18n="skip.content">Skip to content</a>
+    <div class="contact-starlight-field" aria-hidden="true"></div>
+    <canvas id="pixel-cosmos" aria-hidden="true"></canvas>
+    <section class="scene-studio" id="scene-studio" hidden aria-labelledby="scene-studio-title">
+      <div class="scene-studio-stage" data-scene-stage aria-label="Layered night hero preview">
+        <img class="studio-layer studio-layer-sky" data-studio-src="assets/pixel/home/sky-night-v1.png" alt="" />
+        <div class="studio-sky-twinkles" aria-hidden="true"></div>
+        <img class="studio-layer studio-layer-ground-foundation" data-studio-src="assets/pixel/home/ground-foundation-v6.png" alt="" />
+        <div class="studio-tree">
+          <img class="studio-layer studio-layer-tree" data-studio-src="assets/pixel/home/tree-sway-v1-00.png" data-studio-animation="tree-sway" alt="" />
+          <div class="studio-canopy-sparkles" aria-hidden="true"></div>
+        </div>
+        <img class="studio-layer studio-layer-ground" data-studio-src="assets/pixel/home/meadow-sway-v2-00.png" data-studio-animation="meadow-sway" alt="" />
+        <div class="studio-saber">
+          <img class="studio-layer studio-layer-saber" data-studio-src="assets/pixel/home/saber-idle-chunky-v2-00.png" data-studio-animation="saber-idle" alt="" />
+          <img class="studio-layer studio-layer-saber-eyes" data-saber-eye-layer src="assets/pixel/home/saber-eyes-v2-open.png" alt="" />
+          <span class="studio-saber-night-light" aria-hidden="true"></span>
+        </div>
+        <p class="studio-stage-label">night scene / 1672 × 940</p>
+      </div>
+
+      <aside class="scene-studio-controls" aria-label="Scene Studio controls">
+        <p class="eyebrow">Local composition tool</p>
+        <h1 id="scene-studio-title">Scene<br /><i>Studio</i></h1>
+        <p class="studio-intro">Drag the controls until the composition feels right. The preview is saved in this browser only.</p>
+
+        <div class="studio-control-group">
+          <h2>Tree</h2>
+          <label>Horizontal <input type="range" min="-20" max="60" step="0.1" value="22.8" data-scene-control="tree-x" /><output data-scene-value="tree-x"></output></label>
+          <label>Vertical <input type="range" min="-28" max="32" step="0.1" value="18.6" data-scene-control="tree-y" /><output data-scene-value="tree-y"></output></label>
+          <label>Size <input type="range" min="0.45" max="1.45" step="0.01" value="0.75" data-scene-control="tree-scale" /><output data-scene-value="tree-scale"></output></label>
+          <label>Depth / layer <input type="range" min="1" max="5" step="1" value="1" data-scene-control="tree-layer" /><output data-scene-value="tree-layer"></output></label>
+          <label class="studio-palette-control">Canopy lights <select data-scene-control="canopy-palette" aria-label="Canopy light colour"><option value="gold" selected>Gold</option><option value="ice">Ice</option><option value="jade">Jade</option></select></label>
+        </div>
+
+        <div class="studio-control-group">
+          <h2>Saber</h2>
+          <label>Horizontal <input type="range" min="0" max="90" step="0.1" value="62.1" data-scene-control="saber-x" /><output data-scene-value="saber-x"></output></label>
+          <label>Vertical <input type="range" min="0" max="80" step="0.1" value="68" data-scene-control="saber-y" /><output data-scene-value="saber-y"></output></label>
+          <label>Size <input type="range" min="0.25" max="1.2" step="0.01" value="0.48" data-scene-control="saber-scale" /><output data-scene-value="saber-scale"></output></label>
+          <label>Brightness <input type="range" min="0.5" max="1.1" step="0.01" value="0.68" data-scene-control="saber-brightness" /><output data-scene-value="saber-brightness"></output></label>
+          <label>Night light <input type="range" min="0" max="0.6" step="0.01" value="0.47" data-scene-control="saber-night-light" /><output data-scene-value="saber-night-light"></output></label>
+          <label>Depth / layer <input type="range" min="1" max="5" step="1" value="3" data-scene-control="saber-layer" /><output data-scene-value="saber-layer"></output></label>
+        </div>
+
+        <div class="studio-control-group">
+          <h2>Ground</h2>
+          <label>Vertical <input type="range" min="-18" max="18" step="0.1" value="4.8" data-scene-control="foundation-y" /><output data-scene-value="foundation-y"></output></label>
+          <label>Width <input type="range" min="0.75" max="2.2" step="0.01" value="1.02" data-scene-control="foundation-width" /><output data-scene-value="foundation-width"></output></label>
+          <label>Size <input type="range" min="0.7" max="1.3" step="0.01" value="0.89" data-scene-control="foundation-scale" /><output data-scene-value="foundation-scale"></output></label>
+          <label>Depth / layer <input type="range" min="0" max="5" step="1" value="1" data-scene-control="foundation-layer" /><output data-scene-value="foundation-layer"></output></label>
+        </div>
+
+        <div class="studio-control-group">
+          <h2>Grass</h2>
+          <label>Horizontal <input type="range" min="-40" max="40" step="0.1" value="9.3" data-scene-control="ground-x" /><output data-scene-value="ground-x"></output></label>
+          <label>Vertical <input type="range" min="-18" max="18" step="0.1" value="-5.2" data-scene-control="ground-y" /><output data-scene-value="ground-y"></output></label>
+          <label>Size <input type="range" min="0.5" max="1.15" step="0.01" value="0.65" data-scene-control="ground-scale" /><output data-scene-value="ground-scale"></output></label>
+          <label>Depth / layer <input type="range" min="1" max="5" step="1" value="5" data-scene-control="ground-layer" /><output data-scene-value="ground-layer"></output></label>
+          <label>Motion / frame <input type="range" min="180" max="900" step="20" value="260" data-scene-control="wind-frame-duration" /><output data-scene-value="wind-frame-duration"></output></label>
+        </div>
+
+        <div class="studio-actions">
+          <button type="button" data-scene-action="reset">Restore draft</button>
+          <button type="button" class="primary" data-scene-action="copy">Copy configuration</button>
+        </div>
+        <p class="studio-status" data-scene-status aria-live="polite">Changes save to this browser.</p>
+      </aside>
+    </section>
+    <div class="scroll-meter" aria-hidden="true"><span></span></div>
+    <button class="site-build-progress" type="button" aria-haspopup="dialog" aria-controls="build-status-dialog" aria-label="Site construction progress: 35%" data-i18n-aria-label="progress.label">
+      <span data-i18n-html="progress.text">Site under construction <b>35%</b></span>
+      <span class="build-track" aria-hidden="true"><span class="build-fill"></span></span>
+    </button>
+
+    <div class="language-switcher" role="group" aria-label="Language" data-i18n-aria-label="language.group">
+      <button type="button" data-language-option="en" aria-pressed="true" aria-label="English" data-i18n-aria-label="language.english">EN</button>
+      <button type="button" data-language-option="zh-CN" aria-pressed="false" aria-label="Chinese" data-i18n-aria-label="language.chinese">中</button>
+      <span class="visually-hidden" data-language-status aria-live="polite"></span>
+    </div>
+
+    <nav class="chapter-nav" aria-label="Portfolio chapters" data-i18n-aria-label="nav.label">
+      <a href="#home" data-nav="home" data-mobile-label="Home" data-i18n-data-mobile-label="nav.home"><span class="chapter-nav-number">00</span> <span class="chapter-nav-label" data-i18n="nav.home">Home</span></a>
+      <a href="#bio" data-nav="bio" data-mobile-label="Bio" data-i18n-data-mobile-label="nav.bio"><span class="chapter-nav-number">01</span> <span class="chapter-nav-label" data-i18n="nav.bio">Bio</span></a>
+      <a href="#education" data-nav="education" data-mobile-label="Background" data-i18n-data-mobile-label="nav.background"><span class="chapter-nav-number">02</span> <span class="chapter-nav-label" data-i18n="nav.background">Background</span></a>
+      <a href="#ophthalmic" data-nav="ophthalmic" data-mobile-label="Ophthalmic" data-i18n-data-mobile-label="nav.ophthalmic"><span class="chapter-nav-number">03</span> <span class="chapter-nav-label" data-i18n="nav.ophthalmic">Ophthalmic</span></a>
+      <a href="#industrial" data-nav="industrial" data-mobile-label="Industrial" data-i18n-data-mobile-label="nav.industrial"><span class="chapter-nav-number">04</span> <span class="chapter-nav-label" data-i18n="nav.industrial">Industrial</span></a>
+      <a href="#contact" data-nav="contact" data-mobile-label="Contact" data-i18n-data-mobile-label="nav.contact"><span class="chapter-nav-number">05</span> <span class="chapter-nav-label" data-i18n="nav.contact">Contact</span></a>
+    </nav>
+
+    <main id="main-content">
+      <section class="chapter chapter-home" id="home" data-chapter="home" aria-labelledby="home-title">
+        <div class="home-visual home-visual-layered" aria-hidden="true">
+          <div class="home-scene-rig" data-home-scene>
+            <img class="home-scene-layer home-scene-sky" src="assets/pixel/home/sky-night-v1.png" alt="" />
+            <div class="home-sky-twinkles" aria-hidden="true"></div>
+            <img class="home-scene-layer home-scene-foundation" src="assets/pixel/home/ground-foundation-v6.png" alt="" />
+            <div class="home-scene-tree-wrap">
+              <img class="home-scene-layer home-scene-tree" src="assets/pixel/home/tree-sway-v1-00.png" data-home-animation="tree-sway" alt="" />
+              <div class="home-canopy-sparkles" aria-hidden="true"></div>
+            </div>
+            <img class="home-scene-layer home-scene-ground" src="assets/pixel/home/meadow-sway-v2-00.png" data-home-animation="meadow-sway" alt="" />
+            <div class="home-scene-saber">
+              <img class="home-scene-layer home-scene-saber-figure" src="assets/pixel/home/saber-idle-chunky-v2-00.png" data-home-animation="saber-idle" alt="" />
+              <img class="home-scene-layer home-scene-saber-eyes" data-saber-eye-layer src="assets/pixel/home/saber-eyes-v2-open.png" alt="" />
+              <span class="home-scene-saber-night-light"></span>
+            </div>
+          </div>
+        </div>
+        <span class="home-signal-trail" aria-hidden="true"></span>
+        <span class="home-signal-firefly" aria-hidden="true"></span>
+        <button class="home-tree-easter-egg" type="button" data-tree-easter-egg aria-label="Press the tree ten times to call fluorescent rain"></button>
+        <span class="home-fluorescent-rain" data-fluorescent-rain aria-hidden="true"></span>
+        <span class="visually-hidden" data-tree-easter-egg-status aria-live="polite"></span>
+        <div class="home-intro">
+          <p class="eyebrow" data-i18n="home.eyebrow">00 / time tree</p>
+          <h1 id="home-title">Zhengji<br /><span>LIU</span></h1>
+          <p data-i18n="home.role">Image Processing Engineer · Researcher</p>
+        </div>
+        <a class="enter-cv" href="#bio"><span data-i18n="home.enter">Enter CV</span> <span class="enter-cv-line" aria-hidden="true"></span></a>
+      </section>
+
+      <section class="chapter chapter-bio" id="bio" data-chapter="bio" aria-labelledby="bio-title">
+        <div class="chapter-grid">
+          <div class="chapter-copy hero-copy">
+            <p class="eyebrow" data-i18n="bio.eyebrow">01 / profile orbit</p>
+            <h1 id="bio-title" data-i18n-html="bio.title">Engineer<span>/</span><br />Researcher</h1>
+            <p class="name-lockup" data-i18n-html="bio.name">Zhengji <strong>LIU</strong></p>
+            <div class="bio-statement">
+              <p data-i18n-html="bio.summary">I am a PhD student at the School of Optometry, The Hong Kong Polytechnic University, under the supervision of <a href="https://www.polyu.edu.hk/so/people/academic-staff/rachel-chun/" target="_blank" rel="noreferrer">Prof. Rachel Ka-Man CHUN</a>.</p>
+              <p data-i18n="bio.work">My work develops image-processing and machine-learning methods that turn ophthalmic images into clinically actionable measurements, with a focus on myopia control in children.</p>
+            </div>
+          </div>
+
+          <figure class="scene scene-bio" data-parallax>
+            <div class="figure-halo" aria-hidden="true"></div>
+            <img src="assets/scene/bio-saber-large-rice.png?v=20260728-clean" alt="Chibi Saber holding an oversized bowl of rice." data-i18n-alt="bio.figure.alt" />
+            <figcaption data-i18n-html="bio.figure.caption">Beginning from curiosity.<br />Keeping the bowl large.</figcaption>
+          </figure>
+        </div>
+        <p class="scroll-cue" aria-hidden="true"><span data-i18n="scroll.enter">scroll to enter</span> <span class="scroll-cue-line" aria-hidden="true"></span></p>
+      </section>
+
+      <section class="chapter chapter-education" id="education" data-chapter="education" aria-labelledby="education-title">
+        <div class="chapter-grid">
+          <div class="chapter-copy">
+            <p class="eyebrow" data-i18n="background.eyebrow">02 / academic / professional</p>
+            <h2 id="education-title" data-i18n-html="background.title">Academic<br /><i>Background</i></h2>
+            <p class="section-statement" data-i18n="background.statement">Training and research experience across biomedical engineering, ophthalmic imaging, and applied computer vision.</p>
+            <p class="chapter-note" data-i18n="background.note">Across these settings, I have focused on turning image signals into reliable clinical and operational decisions.</p>
+          </div>
+          <div class="background-index-grid" aria-label="Background details" data-i18n-aria-label="background.gridLabel">
+            <button class="background-index-card" type="button" data-path-open aria-haspopup="dialog" aria-controls="path-history-dialog">
+              <span class="background-index-number">01</span>
+              <strong data-i18n="background.history.title">Education / Experience</strong>
+              <small data-i18n="background.history.subtitle">Degrees and research roles</small>
+              <span class="background-index-action"><span data-i18n="action.open">Open</span> <span aria-hidden="true">↗</span></span>
+            </button>
+            <button class="background-index-card" type="button" data-path-open aria-haspopup="dialog" aria-controls="path-skills-dialog">
+              <span class="background-index-number">02</span>
+              <strong data-i18n="background.skills.title">Skills</strong>
+              <small data-i18n="background.skills.subtitle">Tools, methods, and languages</small>
+              <span class="background-index-action"><span data-i18n="action.open">Open</span> <span aria-hidden="true">↗</span></span>
+            </button>
+            <button class="background-index-card" type="button" data-path-open aria-haspopup="dialog" aria-controls="path-publications-dialog">
+              <span class="background-index-number">03</span>
+              <strong data-i18n="background.publications.title">Publications</strong>
+              <small data-i18n="background.publications.subtitle">Journal articles, conference papers, and abstracts</small>
+              <span class="background-index-action"><span data-i18n="action.open">Open</span> <span aria-hidden="true">↗</span></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter chapter-ophthalmic" id="ophthalmic" data-chapter="ophthalmic" aria-labelledby="ophthalmic-title">
+        <div class="chapter-grid">
+          <div class="chapter-copy">
+            <p class="eyebrow" data-i18n="ophthalmic.eyebrow">03 / vision for care</p>
+            <h2 id="ophthalmic-title" data-i18n-html="ophthalmic.title">Ophthalmic<br /><i>Vision</i></h2>
+            <p class="section-statement" data-i18n="ophthalmic.statement">From an image signal to a clinically meaningful measurement.</p>
+            <div class="project-case-list" aria-label="Ophthalmic project cases" data-i18n-aria-label="ophthalmic.casesLabel">
+              <button class="project-case-card" type="button" data-project-open="corvis-super-resolution" aria-haspopup="dialog" aria-controls="corvis-super-resolution-dialog">
+                <span class="project-case-index" data-i18n="case.01">Case 01</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case1.title">Corvis ST Corneal Image Super-Resolution</span>
+                <span class="project-case-action"><span data-i18n="action.openCase">Open case</span> <span aria-hidden="true">↗</span></span>
+              </button>
+              <button class="project-case-card" type="button" data-project-open="choroidal-oct-analysis" aria-haspopup="dialog" aria-controls="choroidal-oct-analysis-dialog">
+                <span class="project-case-index" data-i18n="case.02">Case 02</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case2.title">Deep Learning–Based Choroidal OCT Analysis</span>
+                <span class="project-case-action"><span data-i18n="action.openCase">Open case</span> <span aria-hidden="true">↗</span></span>
+              </button>
+            </div>
+          </div>
+
+          <figure class="scene scene-ophthalmic" data-parallax>
+            <div class="scene-rig">
+              <div class="scan-orbit" aria-hidden="true"></div>
+              <img class="oct" src="assets/scene/ophthalmic-oct.png?v=20260729-outline" alt="A stylized optical coherence tomography machine." data-i18n-alt="ophthalmic.figure.octAlt" />
+              <img class="saber" src="assets/scene/ophthalmic-saber-glasses.png?v=20260728-clean" alt="Chibi Saber holding round glasses." data-i18n-alt="ophthalmic.figure.saberAlt" />
+            </div>
+            <figcaption data-i18n="ophthalmic.figure.caption">observe / reconstruct / translate</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="chapter chapter-industrial" id="industrial" data-chapter="industrial" aria-labelledby="industrial-title">
+        <div class="chapter-grid">
+          <div class="chapter-copy">
+            <p class="eyebrow" data-i18n="industrial.eyebrow">04 / vision on the line</p>
+            <h2 id="industrial-title" data-i18n-html="industrial.title">Industrial<br /><i>Vision</i></h2>
+            <p class="section-statement" data-i18n="industrial.statement">Computer vision for quality inspection in real production conditions.</p>
+            <div class="project-case-list" aria-label="Industrial project cases" data-i18n-aria-label="industrial.casesLabel">
+              <button class="project-case-card" type="button" data-project-open="battery-terminal" aria-haspopup="dialog" aria-controls="battery-terminal-dialog">
+                <span class="project-case-index" data-i18n="case.01">Case 01</span>
+                <span class="project-case-title" data-i18n="industrial.case1.title">Battery Terminal Inspection Concept</span>
+                <span class="project-case-action"><span data-i18n="action.openCase">Open case</span> <span aria-hidden="true">↗</span></span>
+              </button>
+            </div>
+          </div>
+
+          <figure class="scene scene-industrial" data-parallax>
+            <div class="scene-rig">
+              <img class="line" src="assets/scene/industrial-production-line-q.png?v=20260729-simple" alt="A stylized factory inspection conveyor line." data-i18n-alt="industrial.figure.lineAlt" />
+              <img class="saber" src="assets/scene/industrial-saber-wrench.png?v=20260728-clean" alt="Chibi Saber holding a wrench." data-i18n-alt="industrial.figure.saberAlt" />
+            </div>
+            <figcaption data-i18n="industrial.figure.caption">inspect / decide / repeat</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="chapter chapter-contact" id="contact" data-chapter="contact" aria-labelledby="contact-title">
+        <div class="contact-panel">
+          <p class="eyebrow" data-i18n="contact.eyebrow">05 / contact</p>
+          <h2 id="contact-title" lang="la" data-i18n-html="contact.title" data-i18n-lang="contact.title.lang">Fata viam<br /><i>invenient.</i></h2>
+          <p data-i18n="contact.invitation">Open to research collaborations and engineering conversations across ophthalmic imaging, computer vision, and industrial inspection.</p>
+          <div class="contact-links">
+            <a href="mailto:zheng-ji.liu@connect.polyu.hk"><span data-i18n="contact.email">Email</span> <span>↗</span></a>
+            <a href="https://github.com/EpicWatermelon" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+            <a href="https://www.linkedin.com/in/liuzj" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a>
+          </div>
+        </div>
+        <footer>
+          <p>© 2026 · Zhengji Liu</p>
+            <p class="generated-by" data-i18n="footer.generated">Vibe-coded with Codex</p>
+        </footer>
+      </section>
+    </main>
+
+    <div class="project-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close project detail" data-i18n-aria-label="project.closeBackdrop"></button>
+      <aside class="project-detail-drawer" id="corvis-super-resolution-dialog" role="dialog" aria-modal="true" aria-labelledby="corvis-super-resolution-title" tabindex="-1">
+        <figure class="project-detail-visual project-detail-visual--paper">
+          <img src="assets/papers/corvis-figure-5.jpg" alt="Paper figure comparing Corvis ST corneal images before and after super-resolution." data-i18n-alt="project.corvis.visualAlt" />
+          <figcaption class="project-paper-caption" data-i18n="project.corvis.paperCaption">Fig. 5 — Clinical Corvis ST comparison</figcaption>
+        </figure>
+
+        <div class="project-detail-story">
+          <header class="project-detail-header">
+            <div>
+              <p class="eyebrow" data-i18n="project.corvis.eyebrow">03.01 / ophthalmic vision case</p>
+              <h2 id="corvis-super-resolution-title" data-i18n-html="project.corvis.title">Corvis ST Corneal<br /><i>Image Super-Resolution</i></h2>
+            </div>
+            <button class="project-detail-close" type="button" data-project-close aria-label="Close Corvis ST project" data-i18n-aria-label="project.corvis.close">
+              <span aria-hidden="true"></span>
+            </button>
+          </header>
+
+          <p class="project-detail-lede" data-i18n="project.corvis.lede">We used computational image enhancement to recover clinically useful vertical detail from high-frame-rate Corvis ST sequences.</p>
+
+          <dl class="project-detail-facts">
+            <div>
+              <dt data-i18n="fact.organization">Organization</dt>
+              <dd data-i18n="project.corvis.organization">Beijing Tongren Hospital collaboration</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.year">Year</dt>
+              <dd data-i18n="project.corvis.year">2021</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.role">Role</dt>
+              <dd data-i18n="project.corvis.role">Algorithm development and image analysis</dd>
+            </div>
+          </dl>
+
+          <div class="project-detail-sections">
+            <section aria-labelledby="corvis-challenge-title">
+              <p class="project-detail-number">01</p>
+              <div>
+                <h3 id="corvis-challenge-title" data-i18n="project.corvis.challenge.title">Clinical challenge</h3>
+                <p data-i18n="project.corvis.challenge.body">Optical distortion and acquisition error limit the vertical resolution of Corvis ST images, which can obscure fine corneal deformation patterns used in biomechanical assessment.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="corvis-method-title">
+              <p class="project-detail-number">02</p>
+              <div>
+                <h3 id="corvis-method-title" data-i18n="project.corvis.contribution.title">Project contribution</h3>
+                <p data-i18n="project.corvis.contribution.body">We developed a computational method that preserves high temporal resolution while reconstructing additional vertical image detail across the air-puff sequence.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="corvis-outcome-title">
+              <p class="project-detail-number">03</p>
+              <div>
+                <h3 id="corvis-outcome-title" data-i18n="project.corvis.outcome.title">Outcome</h3>
+                <p data-i18n="project.corvis.outcome.body">Evaluation through central corneal thickness measurements revealed previously unrecognized deformation patterns and statistically significant differences between normal and keratoconus groups (P &lt; 0.01).</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="project-detail-footer">
+            <ul class="project-detail-tags" aria-label="Project methods" data-i18n-aria-label="project.methods">
+              <li data-i18n="tag.superResolution">Super-resolution</li>
+              <li data-i18n="tag.cornealImaging">Corneal imaging</li>
+              <li data-i18n="tag.timeSeries">Time-series analysis</li>
+              <li data-i18n="tag.clinicalMeasurement">Clinical measurement</li>
+            </ul>
+            <a class="project-source-link" href="https://doi.org/10.1016/j.bspc.2020.102297" target="_blank" rel="noopener noreferrer" data-i18n="project.source">Read the paper ↗</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="project-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close project detail" data-i18n-aria-label="project.closeBackdrop"></button>
+      <aside class="project-detail-drawer" id="choroidal-oct-analysis-dialog" role="dialog" aria-modal="true" aria-labelledby="choroidal-oct-analysis-title" tabindex="-1">
+        <figure class="project-detail-visual project-detail-visual--paper">
+          <img src="assets/papers/dims-figure-1.jpg" alt="Paper figure showing automated choroid segmentation on an OCT scan." data-i18n-alt="project.choroid.visualAlt" />
+          <figcaption class="project-paper-caption" data-i18n="project.choroid.paperCaption">Fig. 1 — Automated choroid segmentation</figcaption>
+        </figure>
+
+        <div class="project-detail-story">
+          <header class="project-detail-header">
+            <div>
+              <p class="eyebrow" data-i18n="project.choroid.eyebrow">03.02 / ophthalmic vision case</p>
+              <h2 id="choroidal-oct-analysis-title" data-i18n-html="project.choroid.title">Deep Learning–Based<br /><i>Choroidal OCT Analysis</i></h2>
+            </div>
+            <button class="project-detail-close" type="button" data-project-close aria-label="Close choroidal OCT project" data-i18n-aria-label="project.choroid.close">
+              <span aria-hidden="true"></span>
+            </button>
+          </header>
+
+          <p class="project-detail-lede" data-i18n="project.choroid.lede">We built an OCT analysis system designed to quantify choroidal change and support objective evaluation of myopia-control interventions.</p>
+
+          <dl class="project-detail-facts">
+            <div>
+              <dt data-i18n="fact.organization">Organization</dt>
+              <dd data-i18n="institution.polyu">The Hong Kong Polytechnic University</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.year">Year</dt>
+              <dd data-i18n="project.choroid.year">2023</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.role">Role</dt>
+              <dd data-i18n="project.choroid.role">Algorithm design and analysis</dd>
+            </div>
+          </dl>
+
+          <div class="project-detail-sections">
+            <section aria-labelledby="choroid-system-title">
+              <p class="project-detail-number">01</p>
+              <div>
+                <h3 id="choroid-system-title" data-i18n="project.choroid.system.title">Analysis system</h3>
+                <p data-i18n="project.choroid.system.body">We designed convolutional neural network methods for automatic choroid segmentation and foveal localization, with additional modules for vessel segmentation and choroidal vascularity index analysis.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="choroid-measurement-title">
+              <p class="project-detail-number">02</p>
+              <div>
+                <h3 id="choroid-measurement-title" data-i18n="project.choroid.measurements.title">Measurements</h3>
+                <p data-i18n="project.choroid.measurements.body">Our pipeline extracts subfoveal choroidal thickness, vascularity, and morphological parameters from OCT images so longitudinal treatment effects can be evaluated consistently.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="choroid-outcome-title">
+              <p class="project-detail-number">03</p>
+              <div>
+                <h3 id="choroid-outcome-title" data-i18n="project.choroid.outcome.title">Outcome</h3>
+                <p data-i18n="project.choroid.outcome.body">In the DIMS study, we found that subfoveal choroidal thickness increased by 6.75 ± 1.52 μm after one week, versus −3.17 ± 1.48 μm in controls (P &lt; 0.0001), with choroidal change negatively associated with axial elongation.</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="project-detail-footer">
+            <ul class="project-detail-tags" aria-label="Project methods" data-i18n-aria-label="project.methods">
+              <li>OCT</li>
+              <li data-i18n="tag.cnnSegmentation">CNN segmentation</li>
+              <li data-i18n="tag.foveaLocalization">Fovea localization</li>
+              <li data-i18n="tag.myopiaControl">Myopia control</li>
+            </ul>
+            <a class="project-source-link" href="https://doi.org/10.1186/s40662-023-00356-z" target="_blank" rel="noopener noreferrer" data-i18n="project.source">Read the paper ↗</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="project-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close project detail" data-i18n-aria-label="project.closeBackdrop"></button>
+      <aside class="project-detail-drawer" id="battery-terminal-dialog" role="dialog" aria-modal="true" aria-labelledby="battery-terminal-title" tabindex="-1">
+        <figure class="project-detail-visual">
+          <img src="assets/projects/battery-terminal-defect.jpeg" alt="Close inspection image of a circular battery terminal under red illumination." data-i18n-alt="project.battery.visualAlt" />
+        </figure>
+
+        <div class="project-detail-story">
+          <header class="project-detail-header">
+            <div>
+              <p class="eyebrow" data-i18n="project.battery.eyebrow">04.01 / industrial vision case</p>
+              <h2 id="battery-terminal-title" data-i18n-html="project.battery.title">Battery Terminal<br /><i>Inspection Concept</i></h2>
+            </div>
+            <button class="project-detail-close" type="button" data-project-close aria-label="Close battery terminal project" data-i18n-aria-label="project.battery.close">
+              <span aria-hidden="true"></span>
+            </button>
+          </header>
+
+          <p class="project-detail-lede" data-i18n="project.battery.lede">We developed a machine-vision concept for separating localized surface and edge irregularities from the strong concentric geometry of a battery terminal.</p>
+
+          <dl class="project-detail-facts">
+            <div>
+              <dt data-i18n="fact.company">Company</dt>
+              <dd data-i18n="project.battery.company">Confidential battery manufacturer</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.projectDate">Project date</dt>
+              <dd data-i18n="project.battery.date">Not publicly disclosed</dd>
+            </div>
+            <div>
+              <dt data-i18n="fact.role">Role</dt>
+              <dd data-i18n="project.battery.role">Machine Vision Engineer</dd>
+            </div>
+          </dl>
+
+          <div class="project-detail-sections">
+            <section aria-labelledby="battery-overview-title">
+              <p class="project-detail-number">01</p>
+              <div>
+                <h3 id="battery-overview-title" data-i18n="project.battery.overview.title">Project overview</h3>
+                <p data-i18n="project.battery.overview.body">The inspection sample exposes a high-contrast circular structure with localized texture variation around the outer seam. The project challenge was to preserve subtle defect evidence while suppressing illumination gradients and expected ring boundaries.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="battery-contribution-title">
+              <p class="project-detail-number">02</p>
+              <div>
+                <h3 id="battery-contribution-title" data-i18n="project.battery.contribution.title">My contribution</h3>
+                <p data-i18n="project.battery.contribution.body">We designed the inspection concept and proposed pipeline: locate the terminal centre, normalize radial illumination, unwrap the annular region into a linear strip, then combine edge continuity and local texture descriptors to identify candidate anomalies.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="battery-outcome-title">
+              <p class="project-detail-number">03</p>
+              <div>
+                <h3 id="battery-outcome-title" data-i18n="project.battery.outcome.title">Project outcome</h3>
+                <p data-i18n="project.battery.outcome.body">We produced an explainable inspection concept and a validation plan for tuning the defect signal against production samples, operator review, and repeatable quality decisions. This public case omits quantitative production results and confidential implementation details.</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="project-detail-footer">
+            <ul class="project-detail-tags" aria-label="Proposed methods" data-i18n-aria-label="project.proposedMethods">
+              <li data-i18n="tag.roiLocalization">ROI localization</li>
+              <li data-i18n="tag.illuminationCorrection">Illumination correction</li>
+              <li data-i18n="tag.annularUnwrapping">Annular unwrapping</li>
+              <li data-i18n="tag.textureAnalysis">Texture analysis</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="path-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close construction log" data-i18n-aria-label="progress.close"></button>
+      <aside class="path-detail-dialog path-detail-dialog--build" id="build-status-dialog" role="dialog" aria-modal="true" aria-labelledby="build-status-title" tabindex="-1">
+        <header class="project-detail-header">
+          <div>
+            <p class="eyebrow" data-i18n="progress.eyebrow">00.30 / BUILD LOG</p>
+            <h2 id="build-status-title" data-i18n-html="progress.title">Still<br /><i>Building</i></h2>
+          </div>
+          <button class="project-detail-close" type="button" data-project-close aria-label="Close construction log" data-i18n-aria-label="progress.close"><span aria-hidden="true"></span></button>
+        </header>
+        <div class="build-status-columns">
+          <section class="build-status-column" aria-labelledby="build-current-title">
+            <h3 id="build-current-title" data-i18n="progress.current.title">Current updates</h3>
+            <ul class="build-status-list">
+              <li data-i18n="progress.current.bilingual">English and Chinese content now switch in place and remember your preference.</li>
+              <li data-i18n="progress.current.scene">The responsive pixel scene, motion controls, and research evidence views are in place.</li>
+            </ul>
+          </section>
+          <section class="build-status-column" aria-labelledby="build-next-title">
+            <h3 id="build-next-title" data-i18n="progress.next.title">Next updates</h3>
+            <ul class="build-status-list">
+              <li data-i18n="progress.next.timeOfDay">A time-aware home scene will introduce the prepared daytime visual style.</li>
+              <li data-i18n="progress.next.sync">The local knowledge base and formal CV will be connected through a shared content source.</li>
+            </ul>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <div class="path-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close education and experience detail" data-i18n-aria-label="history.close"></button>
+      <aside class="path-detail-dialog path-detail-dialog--history" id="path-history-dialog" role="dialog" aria-modal="true" aria-labelledby="path-history-title" tabindex="-1">
+        <header class="project-detail-header">
+          <div>
+            <p class="eyebrow" data-i18n="history.eyebrow">02.01 / background</p>
+            <h2 id="path-history-title" data-i18n="history.title">Education / Experience</h2>
+          </div>
+          <button class="project-detail-close" type="button" data-project-close aria-label="Close education and experience detail" data-i18n-aria-label="history.close">
+            <span aria-hidden="true"></span>
+          </button>
+        </header>
+
+        <div class="path-detail-body">
+          <div class="path-detail-section">
+            <p class="project-detail-number">01</p>
+            <div>
+              <p class="path-subsection-label" data-i18n="history.education">Education</p>
+              <ol class="education-list path-education-list">
+                <li class="path-education-entry">
+                  <div class="path-entry-logo">
+                    <img class="school-crest" src="https://www.polyu.edu.hk/favicon.ico" alt="The Hong Kong Polytechnic University crest" data-i18n-alt="history.polyuCrest" />
+                  </div>
+                  <div class="path-entry-content">
+                    <div class="path-entry-heading">
+                      <div>
+                        <p class="path-entry-role" data-i18n="history.phd.role">PhD candidate · Optometry</p>
+                        <strong data-i18n="institution.polyu">The Hong Kong Polytechnic University</strong>
+                      </div>
+                      <time datetime="2021-09" data-i18n="history.phd.date">2021.09 — Present</time>
+                    </div>
+                    <p class="path-entry-location" data-i18n="location.hongKong">Hong Kong SAR, China</p>
+                    <dl class="path-entry-details">
+                      <div><dt data-i18n="history.supervisor">Supervisor</dt><dd data-i18n="history.phd.supervisor">Prof. Rachel Ka-Man Chun, Assistant Professor</dd></div>
+                      <div><dt data-i18n="history.coSupervisor">Co-supervisor</dt><dd data-i18n="history.phd.coSupervisor">Chi-Ho To, Chair Professor</dd></div>
+                    </dl>
+                  </div>
+                </li>
+                <li class="path-education-entry">
+                  <div class="path-entry-logo">
+                    <img class="school-crest school-crest-local" src="assets/brand/szu.jpg" alt="Shenzhen University crest" data-i18n-alt="history.szuCrest" />
+                  </div>
+                  <div class="path-entry-content">
+                    <div class="path-entry-heading">
+                      <div>
+                        <p class="path-entry-role" data-i18n="history.meng.role">MEng · Biomedical Engineering</p>
+                        <strong data-i18n="institution.szu">Shenzhen University</strong>
+                      </div>
+                      <time datetime="2017-09">2017.09 — 2020.07</time>
+                    </div>
+                    <p class="path-entry-location" data-i18n="location.shenzhen">Shenzhen, Guangdong, China</p>
+                    <dl class="path-entry-details">
+                      <div><dt data-i18n="history.supervisor">Supervisor</dt><dd data-i18n="history.meng.supervisor">Yongjin Zhou, Associate Professor</dd></div>
+                    </dl>
+                  </div>
+                </li>
+                <li class="path-education-entry">
+                  <div class="path-entry-logo">
+                    <img class="school-crest school-crest-local ysu" src="assets/brand/ysu.png" alt="Yanshan University crest" data-i18n-alt="history.ysuCrest" />
+                  </div>
+                  <div class="path-entry-content">
+                    <div class="path-entry-heading">
+                      <div>
+                        <p class="path-entry-role" data-i18n="history.beng.role">BEng · Biomedical Engineering</p>
+                        <strong data-i18n="institution.ysu">Yanshan University</strong>
+                      </div>
+                      <time datetime="2013-09">2013.09 — 2017.07</time>
+                    </div>
+                    <p class="path-entry-location" data-i18n="location.qinhuangdao">Qinhuangdao, Hebei, China</p>
+                    <dl class="path-entry-details">
+                      <div><dt data-i18n="history.supervisor">Supervisor</dt><dd data-i18n="history.beng.supervisor">Chao Sun, Professor</dd></div>
+                    </dl>
+                  </div>
+                </li>
+              </ol>
+              <p class="path-subsection-label" data-i18n="history.experience">Work / research experience</p>
+              <ol class="path-experience-list">
+                <li class="path-experience-entry">
+                  <div class="path-entry-logo path-entry-logo--experience">
+                    <img class="school-crest" src="https://www.polyu.edu.hk/favicon.ico" alt="The Hong Kong Polytechnic University crest" data-i18n-alt="history.polyuCrest" />
+                  </div>
+                  <div class="path-entry-content">
+                    <div class="path-entry-heading">
+                      <div>
+                        <p class="path-entry-role" data-i18n="history.ra">Research Assistant</p>
+                        <strong data-i18n="institution.polyu">The Hong Kong Polytechnic University</strong>
+                      </div>
+                      <time datetime="2020-09">2020.09 — 2021.08</time>
+                    </div>
+                    <p class="path-entry-location" data-i18n="location.hongKong">Hong Kong SAR, China</p>
+                    <dl class="path-entry-details">
+                      <div><dt data-i18n="history.school">School</dt><dd data-i18n="history.school.optometry">School of Optometry</dd></div>
+                      <div><dt data-i18n="history.appointment">Appointment</dt><dd data-i18n="history.fullTime">Full-time</dd></div>
+                    </dl>
+                  </div>
+                </li>
+                <li class="path-experience-entry">
+                  <div class="path-entry-logo path-entry-logo--experience">
+                    <img class="school-crest" src="https://www.hku.hk/assets/img/apple-touch-icon.png" alt="The University of Hong Kong crest" data-i18n-alt="history.hkuCrest" />
+                  </div>
+                  <div class="path-entry-content">
+                    <div class="path-entry-heading">
+                      <div>
+                        <p class="path-entry-role" data-i18n="history.ra">Research Assistant</p>
+                        <strong data-i18n="institution.hku">The University of Hong Kong</strong>
+                      </div>
+                      <time datetime="2019-09">2019.09 — 2020.03</time>
+                    </div>
+                    <p class="path-entry-location" data-i18n="location.hongKong">Hong Kong SAR, China</p>
+                    <dl class="path-entry-details">
+                      <div><dt data-i18n="history.department">Department</dt><dd data-i18n="history.department.eee">Department of Electrical and Electronic Engineering</dd></div>
+                      <div><dt data-i18n="history.appointment">Appointment</dt><dd data-i18n="history.internship">Internship</dd></div>
+                    </dl>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="path-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close skills detail" data-i18n-aria-label="skills.close"></button>
+      <aside class="path-detail-dialog path-detail-dialog--skills" id="path-skills-dialog" role="dialog" aria-modal="true" aria-labelledby="path-skills-title" tabindex="-1">
+        <header class="project-detail-header">
+          <div>
+            <p class="eyebrow" data-i18n="skills.eyebrow">02.02 / background</p>
+            <h2 id="path-skills-title" data-i18n="skills.title">Skills</h2>
+          </div>
+          <button class="project-detail-close" type="button" data-project-close aria-label="Close skills detail" data-i18n-aria-label="skills.close">
+            <span aria-hidden="true"></span>
+          </button>
+        </header>
+
+        <div class="path-detail-body">
+          <div class="path-detail-section">
+            <p class="project-detail-number">02</p>
+            <div>
+              <ul class="path-skill-list">
+                <li class="path-skill-group">
+                  <span class="path-skill-index">01</span>
+                  <div><b data-i18n="skills.computerVision">Computer vision / deep learning</b><p>PyTorch · OpenCV · scikit-image</p></div>
+                </li>
+                <li class="path-skill-group">
+                  <span class="path-skill-index">02</span>
+                  <div><b data-i18n="skills.software">Software / application development</b><p>Python · Flask · PyQt</p></div>
+                </li>
+                <li class="path-skill-group">
+                  <span class="path-skill-index">03</span>
+                  <div><b data-i18n="skills.embedded">Embedded systems</b><p>C · STM32 · Arduino</p></div>
+                </li>
+                <li class="path-skill-group">
+                  <span class="path-skill-index">04</span>
+                  <div><b data-i18n="skills.research">Research / analysis</b><p>MATLAB · SPSS · LaTeX</p></div>
+                </li>
+                <li class="path-skill-group">
+                  <span class="path-skill-index">05</span>
+                  <div><b data-i18n="skills.languages">Languages</b><p data-i18n="skills.languageValues">Mandarin (native) · English (proficient)</p></div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="path-detail-layer" data-project-layer aria-hidden="true">
+      <button class="project-detail-backdrop" type="button" data-project-close aria-label="Close publications detail" data-i18n-aria-label="publications.close"></button>
+      <aside class="path-detail-dialog path-detail-dialog--publications" id="path-publications-dialog" role="dialog" aria-modal="true" aria-labelledby="path-publications-title" tabindex="-1">
+        <header class="project-detail-header">
+          <div>
+            <p class="eyebrow" data-i18n="publications.eyebrow">02.03 / background</p>
+            <h2 id="path-publications-title" data-i18n="publications.title">Publications</h2>
+          </div>
+          <button class="project-detail-close" type="button" data-project-close aria-label="Close publications detail" data-i18n-aria-label="publications.close">
+            <span aria-hidden="true"></span>
+          </button>
+        </header>
+
+        <div class="path-detail-body">
+          <div class="path-detail-section">
+            <p class="project-detail-number">03</p>
+            <div class="path-publication-groups">
+              <section class="path-publication-group" aria-labelledby="journal-articles-title">
+                <h3 id="journal-articles-title" data-i18n="publications.journals">Journal articles</h3>
+                <ol class="path-publication-list">
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2023">2023</time><span>Eye and Vision</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1186/s40662-023-00356-z" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Defocus Incorporated Multiple Segments spectacle lenses thicken the choroidal thickness: a two-year randomized clinical trial (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Defocus Incorporated Multiple Segments (DIMS) spectacle lenses thicken the choroidal thickness: a two-year randomized clinical trial <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Rachel Ka-man Chun, Hangyu Zhang, <strong>Zhengji Liu</strong>, Dennis Yan-yin Tse, Yongjin Zhou, Carly Sin-yin Lam, Chi Ho To</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2022">2022</time><span>Biomedical Signal Processing and Control</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1016/j.bspc.2022.103521" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for An eye tracker based on webcam and its preliminary application evaluation in Chinese reading tests (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">An eye tracker based on webcam and its preliminary application evaluation in Chinese reading tests <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Zhongjun Lin, Yinghua Liu, Hui Wang, <strong>Zhengji Liu</strong>, Sijin Cai, Zhicheng Zheng, Yongjin Zhou, Xinyu Zhang</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2021">2021</time><span>Biomedical Signal Processing and Control</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1016/j.bspc.2020.102297" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Finer cornea characterization with improved spatial resolution in Corvis ST (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Finer cornea characterization with improved spatial resolution in Corvis ST <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Yongjin Zhou, <strong>Zhengji Liu</strong>, Lei Tian, Menglin Guo, Jizhou Li</p>
+                  </li>
+                </ol>
+              </section>
+
+              <section class="path-publication-group" aria-labelledby="conference-papers-title">
+                <h3 id="conference-papers-title" data-i18n="publications.conferencePapers">Conference papers</h3>
+                <ol class="path-publication-list">
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2024">2024</time><span>IEEE ICASSP</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1109/icassp48485.2024.10447327" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Boosting of implicit neural representation-based image denoiser (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Boosting of implicit neural representation-based image denoiser <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Zipei Yan, <strong>Zhengji Liu</strong>, Jizhou Li</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2024">2024</time><span>MICCAI</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1007/978-3-031-72378-0_65" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Generalized Robust Fundus Photography-Based Vision Loss Estimation for High Myopia (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Generalized Robust Fundus Photography-Based Vision Loss Estimation for High Myopia <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Zipei Yan, Zhile Liang, <strong>Zhengji Liu</strong>, Shuai Wang, Rachel Ka-Man Chun, Jizhou Li, Chea-su Kee, Dong Liang</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2024">2024</time><span>IEEE ISBI</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1109/isbi56570.2024.10635781" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Synthesising 3D cardiac cine-MR images and corresponding segmentation masks using a latent diffusion model (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Synthesising 3D cardiac cine-MR images and corresponding segmentation masks using a latent diffusion model <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Nina Cheng, <strong>Zhengji Liu</strong>, Yash Deo, Haoran Dou, Ning Bi, Kun Wu, Fengming Lin, Zeike Taylor, Nishant Ravikumar, Alejandro F. Frangi</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2024">2024</time><span>IEEE EMBC</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1109/EMBC53108.2024.10781844" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Multi-dataset collaborative learning for liver tumor segmentation (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Multi-dataset collaborative learning for liver tumor segmentation <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Ziyuan Zhao, Renjun Cai, Kaixin Xu, <strong>Zhengji Liu</strong>, Xulei Yang, Jun Cheng, Cuntai Guan</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2023">2023</time><span>IEEE ICIP</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1109/icip49359.2023.10223125" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Self-supervised denoising of optical coherence tomography with inter-frame representation (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Self-supervised denoising of optical coherence tomography with inter-frame representation <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors"><strong>Zhengji Liu</strong>, Tsz-Kin Law, Jizhou Li, Chi Ho To, Rachel Ka-man Chun</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2023">2023</time><span>MICCAI</span></div>
+                    <p class="path-publication-title"><a href="https://doi.org/10.1007/978-3-031-43990-2_61" target="_blank" rel="noopener noreferrer" aria-label="Open DOI for Vision loss estimation using fundus photograph for high myopia (opens in a new tab)" data-i18n-aria-label="publications.doiOpen">Vision loss estimation using fundus photograph for high myopia <span class="path-publication-link-cue" aria-hidden="true">DOI ↗</span></a></p>
+                    <p class="path-publication-authors">Zipei Yan, Dong Liang, Linchuan Xu, Jiahang Li, <strong>Zhengji Liu</strong>, Shuai Wang, Jiannong Cao, Chea-su Kee</p>
+                  </li>
+                </ol>
+              </section>
+
+              <section class="path-publication-group" aria-labelledby="conference-abstracts-title">
+                <h3 id="conference-abstracts-title" data-i18n="publications.conferenceAbstracts">Conference abstracts</h3>
+                <ol class="path-publication-list">
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2024">2024</time><span>ARVO Annual Meeting</span></div>
+                    <p class="path-publication-title">Improving retinal layer segmentation in rodent OCT images: A Semi-Supervised Learning Approach Using Graph-Cut Generated Pseudo Labels</p>
+                    <p class="path-publication-authors"><strong>Zhengji Liu</strong>, Yingkun Cui, Chi Ho To, Chi Wai Do, Ka Man Chun</p>
+                  </li>
+                  <li class="path-publication-entry">
+                    <div class="path-publication-meta"><time datetime="2021">2021</time><span>Investigative Ophthalmology &amp; Visual Science</span></div>
+                    <p class="path-publication-title">Effect of Defocus Incorporated Multiple Segments (DIMS) lenses on choroidal thickness in schoolchildren</p>
+                    <p class="path-publication-authors">Rachel Ka-man Chun, <strong>Zhengji Liu</strong>, Wing Chun Tang, Dennis Yan-yin Tse, Carly Siu Yin Lam, Chi Ho To</p>
+                  </li>
+                </ol>
+              </section>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

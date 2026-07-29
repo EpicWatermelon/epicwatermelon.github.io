@@ -1,0 +1,44 @@
+# Local development artefacts
+node_modules/
+.playwright-cli/
+output/
+/.worktrees/
+/art-source/
+/resume/
+/docs/
+/design-proposal/
+
+# Unused local asset exports
+/assets/brand/ysu_bw.png
+/assets/pixel/ASSET_MANIFEST.md
+/assets/pixel/home/grass-foreground-firefly-v1.png
+/assets/pixel/home/grass-foreground-ribbon-v1.png
+/assets/pixel/home/ground-foreground-v3.png
+/assets/pixel/home/meadow-foreground-v1.png
+/assets/pixel/home/meadow-sway-v2-sheet-v1.png
+/assets/pixel/home/saber-blink-chunky-v2-sheet-v2.png
+/assets/pixel/home/saber-blink-reference-v2.png
+/assets/pixel/home/saber-blink-reference-v2-*.png
+/assets/pixel/home/saber-idle-ahoge-pixel150-*.png
+/assets/pixel/home/saber-idle-ahoge-sheet-v1.png
+/assets/pixel/home/saber-idle-ahoge-v1-*.png
+/assets/pixel/home/saber-idle-chunky-v1.png
+/assets/pixel/home/saber-idle-chunky-v2.png
+/assets/pixel/home/saber-idle-chunky-v2-sheet-v2.png
+/assets/pixel/home/sky-dawn-v1.png
+/assets/pixel/home/sky-day-v1.png
+/assets/pixel/home/sky-dusk-v1.png
+/assets/pixel/home/sky-dusk-v2.png
+/assets/pixel/home/tree-master-v1.png
+/assets/pixel/home/tree-master-v2.png
+/assets/pixel/home/tree-sway-v1-sheet-v1.png
+/assets/scene/Personal website.lnk
+/assets/scene/hero-time-tree-saber-v3.png
+/assets/papers/corvis-figure-[1-4].jpg
+/assets/papers/corvis-figure-[6-8].jpg
+/assets/papers/dims-figure-3.png
+
+# Visual QA captures
+/bio-*.png
+/education-*.png
+/industrial-foreground*.png
