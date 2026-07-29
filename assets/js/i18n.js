@@ -13,6 +13,7 @@
         storage = null;
       }
       api.initializeLanguageSwitcher(root.document, storage);
+      api.initializeContactEasterEgg(root.document);
     };
     if (root.document.readyState === 'loading') {
       root.document.addEventListener('DOMContentLoaded', start, { once: true });
@@ -33,6 +34,32 @@
   ];
   const originalValues = new WeakMap();
   const initializedDocuments = new WeakSet();
+  const contactEasterEggLyrics = [
+    '蛋糕店里卖蛋糕',
+    '面包店里卖面包',
+    '菜市场里能买辣椒',
+    '厨房里面有菜刀',
+    '无线耳机没有线',
+    '健身房里能锻炼',
+    '吃面条你必须下面',
+    '充电器他能充电',
+    '手表店里卖手表',
+    '饺子店能吃水饺',
+    '小孩肯定比老人小',
+    '一分钟是六十秒',
+    '鸡蛋能做蛋炒饭',
+    '蛋炒饭里有鸡蛋',
+    '快的反义词是慢',
+    '一乘一万得一万',
+    '老婆饼里没老婆',
+    '菠萝包里也没菠萝',
+    '鱼香肉丝没有鱼肉',
+    '麻婆豆腐没有麻婆',
+    '这几年感觉白活',
+    '出了社会没人管我',
+    '这些也没人教我',
+    '哎呀我去你不早说'
+  ];
 
   const translations = {
     'zh-CN': {
@@ -44,8 +71,8 @@
       'language.chinese': '中文',
       'language.changed.en': 'Language changed to English.',
       'language.changed.zh': '语言已切换为中文。',
-      'progress.label': '网站建设进度：35%',
-      'progress.text': '网站建设中 <b>35%</b>',
+      'progress.label': '网站建设进度：40%',
+      'progress.text': '网站建设中 <b>40%</b>',
       'progress.close': '关闭建设日志',
       'progress.eyebrow': '00.30 / 建设日志',
       'progress.title': '仍在<br /><i>建设中</i>',
@@ -285,6 +312,41 @@
     });
   }
 
+  function initializeContactEasterEgg(document) {
+    const trigger = document.querySelector('[data-contact-easter-egg-trigger]');
+    if (!trigger) return null;
+
+    const originalTitle = trigger.innerHTML;
+    let clickCount = 0;
+    let lyricIndex = 0;
+    let isLocked = false;
+    const revealOrRotate = () => {
+      if (document.documentElement.lang !== 'zh-CN' || isLocked) return;
+      if (clickCount < 5) {
+        clickCount += 1;
+        if (clickCount < 5) return;
+        trigger.textContent = contactEasterEggLyrics[lyricIndex];
+        return;
+      }
+      if (lyricIndex === contactEasterEggLyrics.length - 1) {
+        trigger.innerHTML = originalTitle;
+        isLocked = true;
+        return;
+      }
+      lyricIndex = (lyricIndex + 1) % contactEasterEggLyrics.length;
+      trigger.textContent = contactEasterEggLyrics[lyricIndex];
+    };
+
+    trigger.addEventListener('click', revealOrRotate);
+    trigger.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        revealOrRotate();
+      }
+    });
+    return revealOrRotate;
+  }
+
   function applyLanguage(document, requestedLanguage) {
     const language = normalizeLanguage(requestedLanguage);
     applyContent(document, language, '[data-i18n]', 'data-i18n', 'textContent');
@@ -339,6 +401,8 @@
 
   return {
     applyLanguage,
+    contactEasterEggLyrics,
+    initializeContactEasterEgg,
     initializeLanguageSwitcher,
     normalizeLanguage,
     storageKey,

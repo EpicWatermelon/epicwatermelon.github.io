@@ -406,7 +406,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.41');
+  assert.equal(packageJson.version, '0.1.42');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -487,13 +487,13 @@ test('uses a compact handoff that leaves the lowered ground visible', () => {
   assert.match(css, /\.chapter-home::after \{[^}]*height:\s*clamp\(72px, 10vh, 128px\)[^}]*linear-gradient\(180deg, transparent 0%, #03091b 90%\)/s);
 });
 
-test('shows the living CV construction status at thirty percent', () => {
+test('shows the living CV construction status at forty percent', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 35%"/);
-  assert.match(html, /Site under construction <b>35%<\/b>/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*35%;/s);
+  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 40%"/);
+  assert.match(html, /Site under construction <b>40%<\/b>/);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*40%;/s);
 });
 
 test('covers tall viewports while continuously focusing the camera on the tree and Saber', () => {
@@ -541,13 +541,92 @@ test('closes with a specific contact invitation for imaging collaboration', () =
   const contact = html.match(/<section class="chapter chapter-contact"[\s\S]*?<\/section>/)?.[0] ?? '';
 
   assert.match(contact, /<p class="eyebrow"[^>]*>05 \/ contact<\/p>/);
-  assert.match(contact, /<h2 id="contact-title" lang="la" data-i18n-html="contact\.title" data-i18n-lang="contact\.title\.lang">Fata viam<br \/><i>invenient\.<\/i><\/h2>/);
+  assert.match(contact, /<h2 id="contact-title" class="contact-title-easter-egg" lang="la" tabindex="0" role="button" data-contact-easter-egg-trigger data-i18n-html="contact\.title" data-i18n-lang="contact\.title\.lang">Fata viam<br \/><i>invenient\.<\/i><\/h2>/);
   assert.match(contact, /<p[^>]*data-i18n="contact\.invitation"[^>]*>Open to research collaborations and engineering conversations across ophthalmic imaging, computer vision, and industrial inspection\.<\/p>/);
   assert.match(contact, /mailto:zheng-ji\.liu@connect\.polyu\.hk/);
   assert.match(contact, /GitHub[\s\S]*LinkedIn/);
   assert.doesNotMatch(contact, /Let’s make|images useful|next signal|something clear|For research, image systems/i);
   assert.match(css, /\.contact-panel \{[^}]*width:\s*min\(840px, 100%\);/s);
   assert.match(css, /\.contact-panel h2 \{[^}]*margin-bottom:\s*24px;[^}]*font-size:\s*clamp\(4rem, 9vw, 9\.6rem\);/s);
+});
+
+test('unlocks the Chinese contact-title easter egg on its fifth click', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+
+  assert.match(html, /id="contact-title"[^>]*class="contact-title-easter-egg"[^>]*data-contact-easter-egg-trigger/);
+  assert.doesNotMatch(html, /data-contact-easter-egg-message/);
+  assert.match(css, /\.contact-title-easter-egg \{[^}]*cursor:\s*default;/s);
+
+  const listeners = {};
+  const trigger = {
+    textContent: '道阻且长 行则将至。',
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    querySelector(selector) {
+      if (selector === '[data-contact-easter-egg-trigger]') return trigger;
+      return null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let click = 0; click < 4; click += 1) listeners.click();
+  assert.equal(trigger.textContent, '道阻且长 行则将至。');
+  listeners.click();
+  assert.equal(trigger.textContent, '蛋糕店里卖蛋糕');
+  assert.equal(new Set(contactEasterEggLyrics).size, contactEasterEggLyrics.length);
+  assert.equal(contactEasterEggLyrics.at(-1), '哎呀我去你不早说');
+  assert.doesNotMatch(contactEasterEggLyrics.join('\n'), /我去 你怎么不早说/);
+});
+
+test('cycles the contact-title lyric after the easter egg is unlocked', () => {
+  const { initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const trigger = {
+    textContent: '道阻且长 行则将至。',
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    querySelector(selector) {
+      if (selector === '[data-contact-easter-egg-trigger]') return trigger;
+      return null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let click = 0; click < 6; click += 1) listeners.click();
+  assert.equal(trigger.textContent, '面包店里卖面包');
+});
+
+test('locks the contact title after restoring its slogan from the final lyric', () => {
+  const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const originalTitle = '道阻且长<br /><i>行则将至。</i>';
+  let titleHtml = originalTitle;
+  let titleText = '道阻且长 行则将至。';
+  const trigger = {
+    get textContent() { return titleText; },
+    set textContent(value) { titleText = value; titleHtml = value; },
+    get innerHTML() { return titleHtml; },
+    set innerHTML(value) { titleHtml = value; titleText = value; },
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    querySelector(selector) {
+      return selector === '[data-contact-easter-egg-trigger]' ? trigger : null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let click = 0; click < contactEasterEggLyrics.length + 5; click += 1) listeners.click();
+  assert.equal(trigger.innerHTML, originalTitle);
+  listeners.click();
+  assert.equal(trigger.innerHTML, originalTitle);
 });
 
 test('keeps Education as a distinct part of the Background chapter', () => {
@@ -732,11 +811,11 @@ test('shows the current construction progress and concise copyright footer', () 
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /aria-label="Site construction progress: 35%"/);
-  assert.match(html, /Site under construction <b>35%<\/b>/);
+  assert.match(html, /aria-label="Site construction progress: 40%"/);
+  assert.match(html, /Site under construction <b>40%<\/b>/);
   assert.match(html, /<p>© 2026 · Zhengji Liu<\/p>/);
   assert.doesNotMatch(html, /built as a living CV/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*35%;/s);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*40%;/s);
   assert.match(css, /footer \{[^}]*font-size:\s*10px;/s);
 });
 
@@ -1129,7 +1208,7 @@ test('uses Zhengji’s confirmed research voice across the public portfolio', ()
   assert.match(html, /We produced an explainable inspection concept and a validation plan/);
   assert.doesNotMatch(html, /I designed convolutional neural network methods|Produced an explainable inspection concept/);
   assert.match(html, /Synthesising 3D cardiac cine-MR images/);
-  assert.match(html, /Site under construction <b>35%<\/b>/);
+  assert.match(html, /Site under construction <b>40%<\/b>/);
   assert.match(html, /Vibe-coded with Codex/);
   assert.match(html, /Fata viam<br \/><i>invenient\.<\/i>/);
 });
