@@ -509,10 +509,12 @@ function initializeScrollMotion(chapters, motionPreference) {
 
 function initializeContactStarlight(contact, motionPreference) {
   const field = document.querySelector('.contact-starlight-field');
+  const contactNavLink = document.querySelector('[data-nav="contact"]');
   const links = [...(contact?.querySelectorAll('.contact-links a') ?? [])];
   if (!contact || !field || links.length === 0) return;
 
   const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+  const navigationDuration = 1800;
   const particles = Array.from({ length: 24 }, (_, particleIndex) => {
     const element = document.createElement('span');
     const isAnchor = particleIndex % 8 === 0;
@@ -521,6 +523,7 @@ function initializeContactStarlight(contact, motionPreference) {
     return { element, particleIndex, isAnchor };
   });
   let renderFrame = 0;
+  let navigationStart = 0;
 
   const getStartPoint = (particleIndex) => {
     const edge = Math.floor(particleIndex / 6);
@@ -532,9 +535,10 @@ function initializeContactStarlight(contact, motionPreference) {
     return { x: window.innerWidth * .06, y: window.innerHeight * (1 - edgeProgress) };
   };
 
-  const render = () => {
+  const render = (frameTime) => {
     renderFrame = 0;
     if (motionPreference.matches) {
+      navigationStart = 0;
       contactStarlightProgress = 0;
       field.classList.remove('is-active', 'is-settled');
       contact.style.setProperty('--contact-arrival', '0');
@@ -543,7 +547,9 @@ function initializeContactStarlight(contact, motionPreference) {
     }
 
     const contactRect = contact.getBoundingClientRect();
-    const progress = clamp((window.innerHeight * 1.12 - contactRect.top) / (window.innerHeight * 1.12), 0, 1);
+    const scrollProgress = clamp((window.innerHeight * 1.12 - contactRect.top) / (window.innerHeight * 1.12), 0, 1);
+    const navigationProgress = clamp((frameTime - navigationStart) / navigationDuration, 0, 1);
+    const progress = navigationStart > 0 ? navigationProgress : scrollProgress;
     const easedProgress = progress * progress * (3 - 2 * progress);
     const fadeOut = clamp((progress - .78) / .22, 0, 1);
     contactStarlightProgress = progress;
@@ -574,19 +580,41 @@ function initializeContactStarlight(contact, motionPreference) {
       element.style.setProperty('--starlight-opacity', opacity.toFixed(3));
       element.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${scaleValue.toFixed(3)})`;
     });
+
+    if (navigationStart > 0 && navigationProgress < 1) {
+      renderFrame = window.requestAnimationFrame(render);
+    } else if (navigationStart > 0) {
+      navigationStart = 0;
+    }
   };
   const requestRender = () => {
     if (renderFrame) return;
     renderFrame = window.requestAnimationFrame(render);
   };
+  const startNavigationSequence = () => {
+    if (motionPreference.matches) return;
+    navigationStart = window.performance.now();
+    contactStarlightProgress = 0;
+    requestRender();
+  };
+  const stopNavigationSequence = () => {
+    if (navigationStart === 0) return;
+    navigationStart = 0;
+    requestRender();
+  };
   const handleMotionPreference = () => {
     if (motionPreference.matches) {
       window.cancelAnimationFrame(renderFrame);
       renderFrame = 0;
+      navigationStart = 0;
     }
     requestRender();
   };
 
+  contactNavLink?.addEventListener('click', startNavigationSequence);
+  navLinks.filter((link) => link !== contactNavLink).forEach((link) => link.addEventListener('click', stopNavigationSequence));
+  window.addEventListener('wheel', stopNavigationSequence, { passive: true });
+  window.addEventListener('touchstart', stopNavigationSequence, { passive: true });
   window.addEventListener('scroll', requestRender, { passive: true });
   window.addEventListener('resize', requestRender, { passive: true });
   motionPreference.addEventListener('change', handleMotionPreference);

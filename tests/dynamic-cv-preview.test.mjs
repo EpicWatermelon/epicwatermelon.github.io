@@ -406,7 +406,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.40');
+  assert.equal(packageJson.version, '0.1.41');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -432,7 +432,7 @@ test('gathers the final chapter starlight into the contact links', () => {
   assert.match(script, /let contactStarlightProgress = 0;/);
   assert.match(script, /function initializeContactStarlight\(contact, motionPreference\)/);
   assert.match(script, /Array\.from\(\{ length: 24 \}, \(_, particleIndex\) =>/);
-  assert.match(script, /const progress = clamp\(\(window\.innerHeight \* 1\.12 - contactRect\.top\) \/ \(window\.innerHeight \* 1\.12\), 0, 1\);/);
+  assert.match(script, /const scrollProgress = clamp\(\(window\.innerHeight \* 1\.12 - contactRect\.top\) \/ \(window\.innerHeight \* 1\.12\), 0, 1\);/);
   assert.match(script, /const x = inverse \*\* 2 \* start\.x \+ 2 \* inverse \* easedProgress \* control\.x \+ easedProgress \*\* 2 \* target\.x;/);
   assert.match(script, /const starfieldDim = 1 - contactStarlightProgress \* \.62;/);
   assert.match(script, /initializeContactStarlight\(document\.querySelector\('#contact'\), reducedMotion\);/);
@@ -443,6 +443,19 @@ test('gathers the final chapter starlight into the contact links', () => {
   assert.match(css, /\.contact-links a::after \{[^}]*offset-path:\s*inset\(2px round 999px\);/s);
   assert.match(css, /@media \(max-width: 720px\) \{[\s\S]*?\.contact-starlight-particle:nth-child\(n\+13\) \{ display:\s*none;/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.contact-starlight-field,[\s\S]*?\.contact-links a::after \{ display:\s*none;/);
+});
+
+test('replays the complete contact starlight sequence after a 05 navigation click', () => {
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(script, /const contactNavLink = document\.querySelector\('\[data-nav="contact"\]'\);/);
+  assert.match(script, /const navigationDuration = 1800;/);
+  assert.match(script, /contactNavLink\?\.addEventListener\('click', startNavigationSequence\);/);
+  assert.match(script, /navigationStart = window\.performance\.now\(\);/);
+  assert.match(script, /const navigationProgress = clamp\(\(frameTime - navigationStart\) \/ navigationDuration, 0, 1\);/);
+  assert.match(script, /const progress = navigationStart > 0 \? navigationProgress : scrollProgress;/);
+  assert.match(script, /if \(navigationStart > 0 && navigationProgress < 1\) \{\s*renderFrame = window\.requestAnimationFrame\(render\);/);
+  assert.match(script, /const stopNavigationSequence = \(\) => \{[\s\S]*?navigationStart = 0;\s*requestRender\(\);/);
 });
 
 test('blends every chapter palette continuously through the shared scroll render', () => {
