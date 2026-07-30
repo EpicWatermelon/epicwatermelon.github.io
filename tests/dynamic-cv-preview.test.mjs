@@ -18,6 +18,50 @@ print(count)
 `;
 
 const countOpaqueChromaPixels = (path) => Number(execFileSync('python', ['-c', opaqueChromaPixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
+const malinoisBodyDriftPixels = `
+from PIL import Image, ImageChops
+import sys
+
+base = Image.open(sys.argv[1]).convert('RGBA')
+candidate = Image.open(sys.argv[2]).convert('RGBA')
+allowed_boxes = [(640, 280, 790, 385), (970, 335, 1150, 560)]
+base_pixels = base.load()
+candidate_pixels = candidate.load()
+drift = 0
+for y in range(base.height):
+    for x in range(base.width):
+        if any(left <= x < right and top <= y < bottom for left, top, right, bottom in allowed_boxes):
+            continue
+        if base_pixels[x, y] != candidate_pixels[x, y]:
+            drift += 1
+print(drift)
+`;
+
+const countMalinoisBodyDriftPixels = (path) => Number(execFileSync('python', ['-c', malinoisBodyDriftPixels, fileURLToPath(file('assets/pixel/home/malinois-idle-v2-00.png')), fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
+const malinoisTailSwingPixels = `
+from PIL import Image
+import sys
+
+centers = []
+for path in sys.argv[1:]:
+    image = Image.open(path).convert('RGBA')
+    pixels = [y for y in range(280, 570) for x in range(1240, 1335) if image.getpixel((x, y))[3] >= 128]
+    centers.append(sum(pixels) / len(pixels))
+print(max(centers) - min(centers))
+`;
+
+const countMalinoisTailSwingPixels = () => Number(execFileSync('python', ['-c', malinoisTailSwingPixels, ...Array.from({ length: 8 }, (_, index) => fileURLToPath(file(`assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`)))], { encoding: 'utf8' }).trim());
+const malinoisTonguePixels = `
+from PIL import Image
+import sys
+
+image = Image.open(sys.argv[1]).convert('RGBA')
+count = sum(1 for y in range(280, 470) for x in range(470, 670)
+            if image.getpixel((x, y))[3] >= 128 and image.getpixel((x, y))[0] > 200 and image.getpixel((x, y))[1] < 170 and image.getpixel((x, y))[2] > 100)
+print(count)
+`;
+
+const countMalinoisTonguePixels = (path) => Number(execFileSync('python', ['-c', malinoisTonguePixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
 
 test('ships a six-chapter scroll portfolio shell', () => {
   assert.ok(existsSync(file('index.html')), 'index.html must exist');
@@ -114,36 +158,6 @@ test('rewards ten rapid tree presses with a slow canopy-star rain that occasiona
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-fluorescent-rain \{ display:\s*none;/);
 });
 
-test('unlocks the supplied Saber theme after five visibly distinct pixel cues', () => {
-  const html = read('index.html');
-  const css = read('assets/css/dynamic-cv.css');
-  const script = read('assets/js/dynamic-cv.js');
-  const audioPath = 'assets/audio/kishiou-no-hokori.mp3';
-
-  assert.ok(existsSync(file(audioPath)), 'the user-supplied Saber theme must exist');
-  assert.ok(statSync(file(audioPath)).size > 1_000_000, 'the Saber theme must contain the supplied recording');
-  assert.match(html, /<button class="home-saber-theme-trigger"[^>]*data-saber-theme-trigger[^>]*aria-label="Saber — press five times"[^>]*aria-pressed="false"[^>]*>/);
-  assert.match(html, /<audio data-saber-theme preload="none">[\s\S]*<source src="assets\/audio\/kishiou-no-hokori\.mp3" type="audio\/mpeg" \/>[\s\S]*<\/audio>/);
-  assert.match(html, /data-saber-theme-status[^>]*aria-live="polite"/);
-  assert.match(script, /function initializeSaberThemeEasterEgg\(\)/);
-  assert.match(script, /const clicksToUnlock = 5;/);
-  assert.match(script, /const pressFeedbackDurations = \[0, 260, 300, 340, 560, 820\];/);
-  assert.match(script, /trigger\.dataset\.themeStage = String\(pressLevel\);/);
-  assert.match(script, /pressFeedbackDurations\[pressLevel\]/);
-  assert.match(script, /await audio\.play\(\);/);
-  assert.match(script, /showStatus\('Now playing · 孤独な巡礼', '正在播放 · 孤独な巡礼'\);/);
-  assert.doesNotMatch(script, /騎士王の誇り|The Pride of the King of Knights/);
-  assert.match(script, /if \(document\.hidden \|\| document\.body\.dataset\.activeChapter !== 'home'\) pauseTheme\(\);/);
-  assert.match(css, /\.home-saber-theme-trigger \{[^}]*z-index:\s*2;[^}]*cursor:\s*pointer;/s);
-  assert.match(css, /\.home-saber-theme-trigger::before,\s*\.home-saber-theme-trigger::after \{[^}]*top:\s*10\.5%;[^}]*left:\s*47\.5%;/s);
-  assert.match(css, /\[data-theme-stage="1"\] \{[^}]*--theme-press-scale:\s*\.7;/s);
-  assert.match(css, /\[data-theme-stage="5"\] \{[^}]*--theme-press-scale:\s*3\.2;/s);
-  assert.match(css, /\[data-theme-stage="4"\]\.is-pressed::before \{ animation:\s*saber-theme-gather 520ms steps\(5, end\); \}/);
-  assert.match(css, /\[data-theme-stage="5"\]\.is-pressed::before \{ animation:\s*saber-theme-bloom 780ms steps\(7, end\); \}/);
-  assert.match(css, /@keyframes saber-theme-gather[\s\S]*?box-shadow:\s*-34px -24px[\s\S]*?box-shadow:\s*-9px -6px/s);
-  assert.match(css, /@keyframes saber-theme-bloom[\s\S]*?box-shadow:\s*-14px 0[\s\S]*?box-shadow:\s*-46px 0/s);
-});
-
 test('provides a local-only Scene Studio for manually positioning the layered night hero', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
@@ -206,13 +220,143 @@ test('provides a local-only Scene Studio for manually positioning the layered ni
   assert.match(script, /createCanopySparkles\(canopySparkles, \{ count: 52 \}\)/);
 });
 
+test('previews the combined daytime environmental study in local Scene Studio', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  for (const asset of [
+    'assets/pixel/home/sky-day-v2.png',
+    'assets/pixel/home/ground-foundation-day-v1.png',
+    'assets/pixel/home/tree-day-wind-v6-00.png',
+    'assets/pixel/home/tree-day-wind-v6-01.png',
+    'assets/pixel/home/tree-day-wind-v6-02.png',
+    'assets/pixel/home/tree-day-wind-v6-03.png',
+    'assets/pixel/home/tree-day-wind-v6-04.png',
+    'assets/pixel/home/tree-day-wind-v6-05.png',
+    'assets/pixel/home/tree-day-wind-v6-06.png',
+    'assets/pixel/home/tree-day-wind-v6-07.png',
+    'assets/pixel/home/tree-day-wind-v7-00.png',
+    'assets/pixel/home/tree-day-wind-v7-01.png',
+    'assets/pixel/home/tree-day-wind-v7-02.png',
+    'assets/pixel/home/tree-day-wind-v7-03.png',
+    'assets/pixel/home/tree-day-wind-v7-04.png',
+    'assets/pixel/home/tree-day-wind-v7-05.png',
+    'assets/pixel/home/tree-day-wind-v7-06.png',
+    'assets/pixel/home/tree-day-wind-v7-07.png',
+    'assets/pixel/home/meadow-day-wind-v6-00.png',
+    'assets/pixel/home/meadow-day-wind-v6-01.png',
+    'assets/pixel/home/meadow-day-wind-v6-02.png',
+    'assets/pixel/home/meadow-day-wind-v6-03.png',
+    'assets/pixel/home/meadow-day-wind-v6-04.png',
+    'assets/pixel/home/meadow-day-wind-v6-05.png',
+    'assets/pixel/home/meadow-day-wind-v6-06.png',
+    'assets/pixel/home/meadow-day-wind-v6-07.png',
+    'assets/pixel/home/meadow-day-wind-v7-00.png',
+    'assets/pixel/home/meadow-day-wind-v7-01.png',
+    'assets/pixel/home/meadow-day-wind-v7-02.png',
+    'assets/pixel/home/meadow-day-wind-v7-03.png',
+    'assets/pixel/home/meadow-day-wind-v7-04.png',
+    'assets/pixel/home/meadow-day-wind-v7-05.png',
+    'assets/pixel/home/meadow-day-wind-v7-06.png',
+    'assets/pixel/home/meadow-day-wind-v7-07.png',
+    'assets/pixel/home/malinois-body-v3.png',
+    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`),
+    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`),
+    'assets/pixel/home/malinois-tail-v3-00.png',
+    'assets/pixel/home/malinois-tail-v3-01.png',
+    'assets/pixel/home/malinois-tail-v3-02.png',
+    'assets/pixel/home/malinois-tail-v3-03.png',
+    'assets/pixel/home/malinois-tail-v3-04.png',
+    'assets/pixel/home/malinois-tail-v3-05.png',
+    'assets/pixel/home/malinois-tail-v3-06.png',
+    'assets/pixel/home/malinois-tail-v3-07.png'
+  ]) {
+    assert.ok(existsSync(file(asset)), `${asset} must be available to the daytime study`);
+  }
+
+  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/sky-day-v2\.png"/);
+  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/ground-foundation-day-v1\.png"/);
+  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/tree-day-v1\.png"/);
+  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/malinois-body-v3\.png"/);
+  assert.match(html, /data-studio-animation="malinois-tail"/);
+  assert.match(html, /data-studio-animation="malinois-head"/);
+  assert.doesNotMatch(html, /data-studio-animation="malinois-ears"/);
+  assert.match(html, /data-studio-animation="malinois-belly"/);
+  assert.match(html, /data-scene-control="day-wind-strength"/);
+  assert.doesNotMatch(html, /bird-day-v1|studio-day-bird/);
+  assert.match(script, /searchParams\.get\('studio'\) === 'day'/);
+  assert.match(script, /function prepareDaySceneStudio/);
+  assert.match(script, /if \(isDaySceneStudio\) \{\s*prepareDaySceneStudio\(studio\);\s*\} else \{\s*createSkyTwinkles/s);
+  assert.match(script, /const dayFrames = \{/);
+  assert.match(script, /const dayFrameDurations = \[/);
+  assert.match(script, /const strongDayFrames = \{/);
+  assert.match(script, /function startMalinoisAnimation/);
+  assert.match(script, /const tailFrames/);
+  assert.match(script, /const headFrames/);
+  assert.match(script, /const bellyFrames/);
+  assert.match(script, /tree-day-wind-v6-07\.png/);
+  assert.match(script, /tree-day-wind-v7-07\.png/);
+  assert.match(script, /meadow-day-wind-v6-07\.png/);
+  assert.match(script, /meadow-day-wind-v7-07\.png/);
+  assert.match(script, /malinois-tail-v3-\$\{String\(index\)\.padStart/);
+  assert.match(script, /const frames = isDaySceneStudio \? \(dayWindStrength === 3 \? strongDayFrames : dayFrames\) : nightFrames;/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-saber \{ display:\s*none;/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-wind \{ display:\s*grid;/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-layer-ground-foundation \{ display:\s*block;/);
+  assert.doesNotMatch(css, /studio-day-ground-base/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-layer-sky \{ filter: brightness\(\.68\) saturate\(\.72\); \}/);
+});
+
+test('keeps the daytime Malinois body fixed while its separate tail layer idles', () => {
+  assert.ok(existsSync(file('assets/pixel/home/malinois-body-v3.png')), 'the body layer must exist');
+  for (let index = 0; index < 8; index += 1) {
+    const asset = `assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`;
+    assert.ok(existsSync(file(asset)), `${asset} must exist`);
+  }
+  assert.ok(countMalinoisTailSwingPixels() >= 28, 'the tail tip should visibly sweep through the idle loop');
+});
+
+test('gives the daytime Malinois fifteen generated panting head poses and linked belly breathing', () => {
+  const script = read('assets/js/dynamic-cv.js');
+  for (let index = 0; index < 15; index += 1) {
+    assert.ok(existsSync(file(`assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`)), 'every generated panting head frame must exist');
+    assert.ok(existsSync(file(`assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`)), 'every breathing-belly frame must exist');
+  }
+  assert.ok(countMalinoisTonguePixels('assets/pixel/home/malinois-head-v5-00.png') <= 4, 'the pant loop should begin closed');
+  assert.ok(countMalinoisTonguePixels('assets/pixel/home/malinois-head-v5-07.png') >= 28, 'the middle pant frame should show a clear pink tongue');
+  assert.match(script, /const pantSequence = \[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14\];/, 'the open-mouth frames must linger in a visible cooling rhythm before recovering');
+});
+
+test('lets Scene Studio switch between day and night while tuning the daytime Malinois separately', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /data-scene-mode="night"/);
+  assert.match(html, /data-scene-mode="day"/);
+  assert.match(html, /data-scene-control="malinois-x"/);
+  assert.match(html, /data-scene-control="malinois-y"/);
+  assert.match(html, /data-scene-control="malinois-scale"/);
+  assert.match(html, /data-scene-control="malinois-layer"/);
+  assert.match(html, /value="49\.5" data-scene-control="malinois-x"/);
+  assert.match(html, /value="71\.4" data-scene-control="malinois-y"/);
+  assert.match(html, /value="1\.25" data-scene-control="malinois-scale"/);
+  assert.match(css, /\.studio-day-malinois \{[^}]*z-index:\s*var\(--malinois-layer\);/s);
+  assert.match(css, /\.studio-day-malinois \{[^}]*transform:\s*scale\(var\(--malinois-scale\)\);/s);
+  assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-companion \{ display:\s*grid;/);
+  assert.match(script, /const dayCompanionStorageKey = 'zhengji-scene-studio-day-companion-v1';/);
+  assert.match(script, /function initializeSceneStudioModeSwitch\(studio\)/);
+  assert.match(script, /searchParams\.set\('studio', mode === 'day' \? 'day' : '1'\);/);
+});
+
 test('opens Scene Studio from a local file preview with clear depth controls', () => {
   const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
 
   assert.match(script, /const isLocalStudioPreview = .*window\.location\.protocol === 'file:'/);
-  assert.equal((html.match(/Depth \/ layer <input/g) ?? []).length, 4);
-  for (const control of ['tree-layer', 'saber-layer', 'foundation-layer', 'ground-layer']) {
+  assert.equal((html.match(/Depth \/ layer <input/g) ?? []).length, 5);
+  for (const control of ['tree-layer', 'saber-layer', 'malinois-layer', 'foundation-layer', 'ground-layer']) {
     assert.match(html, new RegExp(`data-scene-control="${control}"`));
   }
 });
@@ -444,7 +588,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.45');
+  assert.equal(packageJson.version, '0.1.65');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -1272,7 +1416,7 @@ test('uses Zhengji’s confirmed research voice across the public portfolio', ()
 
   assert.match(html, /Image Processing Engineer · Researcher/);
   assert.match(html, /<meta name="description" content="Zhengji Liu — Image Processing Engineer working across industrial vision and ophthalmic imaging\."[^>]*\/>/);
-  assert.match(html, /<title[^>]*>Zhengji Liu — Image Processing Engineer \/ Researcher<\/title>/);
+  assert.match(html, /<title[^>]*>Zhengji LIU — Personal Website<\/title>/);
   assert.match(html, /My work develops image-processing and machine-learning methods that turn ophthalmic images into clinically actionable measurements, with a focus on myopia control in children\./);
   assert.doesNotMatch(html, /translational application of image processing/);
   assert.match(html, /Training and research experience across biomedical engineering, ophthalmic imaging, and applied computer vision\./);
@@ -1289,6 +1433,12 @@ test('uses Zhengji’s confirmed research voice across the public portfolio', ()
   assert.match(html, /Site under construction <b>40%<\/b>/);
   assert.match(html, /Vibe-coded with Codex/);
   assert.match(html, /Fata viam<br \/><i>invenient\.<\/i>/);
+});
+
+test('keeps the browser-tab identity consistent in Chinese', () => {
+  const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
+
+  assert.equal(translations['zh-CN']['meta.title'], 'Zhengji LIU — Personal Website');
 });
 
 test('ships an accessible bilingual switch without adding a framework', () => {
@@ -1518,6 +1668,58 @@ test('provides Chinese copy for every marked portfolio field', () => {
   ]) {
     assert.match(html, new RegExp(`data-i18n(?:-html)?="${key.replaceAll('.', '\\.')}"`));
   }
+});
+
+test('unlocks the supplied Saber theme after five progressively brighter presses without preloading it', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+  const audioPath = 'assets/audio/kishiou-no-hokori.mp3';
+
+  assert.ok(existsSync(file(audioPath)), 'the user-supplied Saber theme must exist');
+  assert.ok(statSync(file(audioPath)).size > 1_000_000, 'the Saber theme must contain the supplied recording');
+  assert.match(html, /<button class="home-saber-theme-trigger"[^>]*data-saber-theme-trigger[^>]*aria-label="Saber — press five times"[^>]*aria-pressed="false"[^>]*>/);
+  assert.match(html, /<audio data-saber-theme preload="none">[\s\S]*<source src="assets\/audio\/kishiou-no-hokori\.mp3" type="audio\/mpeg" \/>[\s\S]*<\/audio>/);
+  assert.match(html, /data-saber-theme-status[^>]*aria-live="polite"/);
+  assert.match(script, /function initializeSaberThemeEasterEgg\(\)/);
+  assert.match(script, /const clicksToUnlock = 5;/);
+  assert.match(script, /const pressLevel = unlocked \? clicksToUnlock : Math\.min\(clicksToUnlock, presses \+ 1\);/);
+  assert.match(script, /const pressFeedbackDurations = \[0, 260, 300, 340, 560, 820\];/);
+  assert.match(script, /trigger\.dataset\.themeStage = String\(pressLevel\);/);
+  assert.match(script, /pressFeedbackDurations\[pressLevel\]/);
+  assert.doesNotMatch(script, /trigger\.style\.setProperty\('--theme-press-scale'/);
+  assert.match(script, /audio\.volume = \.45;/);
+  assert.match(script, /await audio\.play\(\);/);
+  assert.match(script, /showStatus\('Now playing · 孤独な巡礼', '正在播放 · 孤独な巡礼'\);/);
+  assert.doesNotMatch(script, /騎士王の誇り|The Pride of the King of Knights/);
+  assert.match(script, /trigger\.addEventListener\('click', handlePress\);/);
+  assert.match(css, /\.home-saber-theme-trigger \{[^}]*z-index:\s*2;[^}]*cursor:\s*pointer;/s);
+  assert.match(css, /\.home-saber-theme-trigger:focus-visible \{[^}]*outline:/s);
+  assert.match(css, /\.home-saber-theme-trigger::before,\s*\.home-saber-theme-trigger::after \{[^}]*top:\s*10\.5%;[^}]*left:\s*47\.5%;/s);
+  assert.match(css, /\[data-theme-stage="1"\] \{[^}]*--theme-press-scale:\s*\.7;/s);
+  assert.match(css, /\[data-theme-stage="5"\] \{[^}]*--theme-press-scale:\s*3\.2;/s);
+  assert.match(css, /\[data-theme-stage="4"\]\.is-pressed::before \{ animation:\s*saber-theme-gather 520ms steps\(5, end\); \}/);
+  assert.match(css, /\[data-theme-stage="5"\]\.is-pressed::before \{ animation:\s*saber-theme-bloom 780ms steps\(7, end\); \}/);
+  assert.match(css, /@keyframes saber-theme-gather[\s\S]*?box-shadow:\s*-34px -24px[\s\S]*?box-shadow:\s*-9px -6px/s);
+  assert.match(css, /@keyframes saber-theme-bloom[\s\S]*?box-shadow:\s*-14px 0[\s\S]*?box-shadow:\s*-46px 0/s);
+});
+
+test('pauses the Saber theme when the visitor leaves the home scene', () => {
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(script, /document\.addEventListener\('visibilitychange', handleThemeVisibility\);/);
+  assert.match(script, /attributeFilter: \['data-active-chapter'\]/);
+  assert.match(script, /if \(document\.hidden \|\| document\.body\.dataset\.activeChapter !== 'home'\) pauseTheme\(\);/);
+  assert.match(script, /audio\.addEventListener\('ended', handleThemeEnded\);/);
+  assert.match(script, /trigger\.setAttribute\('aria-pressed', String\(!audio\.paused\)\);/);
+});
+
+test('does not ship the abandoned ambient audio preview experiment', () => {
+  const html = read('index.html');
+
+  assert.doesNotMatch(html, /ambient-audio-preview/);
+  assert.equal(existsSync(file('assets/js/ambient-audio-preview.js')), false);
+  assert.equal(existsSync(file('assets/css/ambient-audio-preview.css')), false);
 });
 
 test('uses paper figures as visual evidence and keeps a two-column construction update', () => {

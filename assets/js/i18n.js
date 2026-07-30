@@ -64,7 +64,7 @@
   const translations = {
     'zh-CN': {
       'meta.description': 'Zhengji Liu——从事工业视觉与眼科影像研究的图像处理工程师。',
-      'meta.title': 'Zhengji Liu — 图像处理工程师 / 科研工作者',
+      'meta.title': 'Zhengji LIU — Personal Website',
       'skip.content': '跳至主要内容',
       'language.group': '语言',
       'language.english': '英文',

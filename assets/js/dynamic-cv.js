@@ -1,7 +1,8 @@
 const sceneStudio = document.querySelector('#scene-studio');
 const searchParams = new URLSearchParams(window.location.search);
 const isLocalStudioPreview = ['127.0.0.1', 'localhost', '[::1]'].includes(window.location.hostname) || window.location.protocol === 'file:';
-const isSceneStudioMode = Boolean(sceneStudio && isLocalStudioPreview && searchParams.get('studio') === '1');
+const isDaySceneStudio = Boolean(sceneStudio && isLocalStudioPreview && searchParams.get('studio') === 'day');
+const isSceneStudioMode = Boolean(sceneStudio && isLocalStudioPreview && (searchParams.get('studio') === '1' || searchParams.get('studio') === 'day'));
 const saberIdleFrames = [
   'assets/pixel/home/saber-idle-chunky-v2-00.png',
   'assets/pixel/home/saber-idle-chunky-v2-01.png',
@@ -320,27 +321,19 @@ function initializeSaberThemeEasterEgg() {
     trigger.style.top = `${saberRect.top - homeRect.top}px`;
     trigger.style.width = `${saberRect.width}px`;
     trigger.style.height = `${saberRect.height}px`;
-    status.style.left = `${saberRect.left - homeRect.left + saberRect.width * .475}px`;
-    status.style.top = `${saberRect.top - homeRect.top + saberRect.height * .105}px`;
+    status.style.left = `${saberRect.left - homeRect.left + saberRect.width * .5}px`;
+    status.style.top = `${saberRect.top - homeRect.top + saberRect.height * .12}px`;
   };
   const scheduleBoundsSync = () => {
     window.cancelAnimationFrame(resizeFrame);
     resizeFrame = window.requestAnimationFrame(syncTriggerBounds);
   };
   const syncPlaybackState = () => {
-    const playing = !audio.paused;
-    trigger.setAttribute('aria-pressed', String(playing));
-    trigger.classList.toggle('is-playing', playing);
-    if (!unlocked) {
-      trigger.setAttribute('aria-label', localized(
-        `Saber — ${clicksToUnlock - presses} presses until the hidden melody`,
-        `Saber——再点 ${clicksToUnlock - presses} 次唤醒隐藏旋律`
-      ));
-      return;
-    }
-    trigger.setAttribute('aria-label', playing
-      ? localized('Saber — pause her theme', 'Saber——暂停她的主题曲')
-      : localized('Saber — play her theme', 'Saber——播放她的主题曲'));
+    trigger.setAttribute('aria-pressed', String(!audio.paused));
+    trigger.classList.toggle('is-playing', !audio.paused);
+    trigger.setAttribute('aria-label', audio.paused
+      ? localized('Saber — play her theme', 'Saber——播放她的主题曲')
+      : localized('Saber — pause her theme', 'Saber——暂停她的主题曲'));
   };
   const pauseTheme = () => {
     if (!audio.paused) audio.pause();
@@ -369,7 +362,10 @@ function initializeSaberThemeEasterEgg() {
     if (!unlocked) {
       presses += 1;
       trigger.dataset.pressCount = String(presses);
-      syncPlaybackState();
+      trigger.setAttribute('aria-label', localized(
+        `Saber — ${clicksToUnlock - presses} presses until the hidden melody`,
+        `Saber——再点 ${clicksToUnlock - presses} 次唤醒隐藏旋律`
+      ));
       if (presses < clicksToUnlock) return;
 
       unlocked = true;
@@ -985,12 +981,41 @@ resize();
 updateScrollMeter();
 }
 
+function prepareDaySceneStudio(studio) {
+  const stage = studio.querySelector('[data-scene-stage]');
+  const label = studio.querySelector('.studio-stage-label');
+
+  studio.querySelectorAll('[data-studio-day-src]').forEach((image) => {
+    image.src = image.dataset.studioDaySrc;
+  });
+  studio.querySelectorAll('[data-studio-day-companion]').forEach((companion) => {
+    companion.hidden = false;
+  });
+  stage.setAttribute('aria-label', 'Combined daytime environmental study');
+  label.textContent = 'day scene / environment study';
+  document.body.classList.add('is-day-scene-studio');
+}
+
+function initializeSceneStudioModeSwitch(studio) {
+  studio.querySelectorAll('[data-scene-mode]').forEach((button) => {
+    const mode = button.dataset.sceneMode;
+    button.setAttribute('aria-pressed', String((mode === 'day') === isDaySceneStudio));
+    button.addEventListener('click', () => {
+      if ((mode === 'day') === isDaySceneStudio) return;
+      searchParams.set('studio', mode === 'day' ? 'day' : '1');
+      window.location.assign(`${window.location.pathname}?${searchParams.toString()}${window.location.hash}`);
+    });
+  });
+}
+
 function initializeSceneStudio(studio) {
   const stage = studio.querySelector('[data-scene-stage]');
   const inputs = [...studio.querySelectorAll('[data-scene-control]')];
   const status = studio.querySelector('[data-scene-status]');
   const canopySparkles = studio.querySelector('.studio-canopy-sparkles');
   const storageKey = 'zhengji-scene-studio-night-v4';
+  const dayCompanionStorageKey = 'zhengji-scene-studio-day-companion-v1';
+  const dayCompanionKeys = ['malinois-x', 'malinois-y', 'malinois-scale', 'malinois-layer', 'day-wind-strength'];
   const sceneStudioConfig = {
     'tree-x': 22.8,
     'tree-y': 18.6,
@@ -1011,6 +1036,11 @@ function initializeSceneStudio(studio) {
     'ground-y': -5.2,
     'ground-scale': 0.65,
     'ground-layer': 5,
+    'malinois-x': 49.5,
+    'malinois-y': 71.4,
+    'malinois-scale': 1.25,
+    'malinois-layer': 4,
+    'day-wind-strength': 2,
     'wind-frame-duration': 260
   };
   const properties = {
@@ -1031,23 +1061,38 @@ function initializeSceneStudio(studio) {
     'ground-x': '--ground-x',
     'ground-y': '--ground-y',
     'ground-scale': '--ground-scale',
-    'ground-layer': '--ground-layer'
+    'ground-layer': '--ground-layer',
+    'malinois-x': '--malinois-x',
+    'malinois-y': '--malinois-y',
+    'malinois-scale': '--malinois-scale',
+    'malinois-layer': '--malinois-layer'
   };
 
   studio.querySelectorAll('[data-studio-src]').forEach((image) => {
     image.src = image.dataset.studioSrc;
   });
-  createSkyTwinkles(studio.querySelector('.studio-sky-twinkles'), { count: 60 });
-  createCanopySparkles(canopySparkles, { count: 52 });
+  if (isDaySceneStudio) {
+    prepareDaySceneStudio(studio);
+  } else {
+    createSkyTwinkles(studio.querySelector('.studio-sky-twinkles'), { count: 60 });
+    createCanopySparkles(canopySparkles, { count: 52 });
+  }
   document.body.classList.add('is-scene-studio');
   studio.hidden = false;
+  initializeSceneStudioModeSwitch(studio);
 
   try {
     const saved = JSON.parse(window.localStorage.getItem(storageKey));
-    Object.keys(sceneStudioConfig).forEach((key) => {
+    Object.keys(sceneStudioConfig).filter((key) => !dayCompanionKeys.includes(key)).forEach((key) => {
       if (key === 'canopy-palette' && ['gold', 'ice', 'jade'].includes(saved?.[key])) sceneStudioConfig[key] = saved[key];
       if (key !== 'canopy-palette' && Number.isFinite(saved?.[key])) sceneStudioConfig[key] = saved[key];
     });
+    if (isDaySceneStudio) {
+      const dayCompanionSaved = JSON.parse(window.localStorage.getItem(dayCompanionStorageKey));
+      dayCompanionKeys.forEach((key) => {
+        if (Number.isFinite(dayCompanionSaved?.[key])) sceneStudioConfig[key] = dayCompanionSaved[key];
+      });
+    }
   } catch {
     // A private browser window can reject storage; the editor remains usable for this visit.
   }
@@ -1055,6 +1100,7 @@ function initializeSceneStudio(studio) {
   const formatValue = (key, value) => {
     if (key === 'canopy-palette') return value;
     if (key === 'wind-frame-duration') return `${Math.round(value)}ms`;
+    if (key === 'day-wind-strength') return ['Gentle', 'Breezy', 'Gusty'][Math.round(value) - 1];
     if (key.endsWith('layer')) return `z${value}`;
     if (key.endsWith('scale') || key === 'foundation-width') return `${value.toFixed(2)}×`;
     if (key === 'saber-brightness' || key === 'saber-night-light') return `${Math.round(value * 100)}%`;
@@ -1078,7 +1124,12 @@ function initializeSceneStudio(studio) {
 
   const saveSceneStudio = () => {
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(sceneStudioConfig));
+      const sharedSceneConfig = Object.fromEntries(Object.entries(sceneStudioConfig).filter(([key]) => !dayCompanionKeys.includes(key)));
+      window.localStorage.setItem(storageKey, JSON.stringify(sharedSceneConfig));
+      if (isDaySceneStudio) {
+        const dayCompanionConfig = Object.fromEntries(dayCompanionKeys.map((key) => [key, sceneStudioConfig[key]]));
+        window.localStorage.setItem(dayCompanionStorageKey, JSON.stringify(dayCompanionConfig));
+      }
     } catch {
       // Saving is an enhancement; rendering and copying still work without it.
     }
@@ -1090,7 +1141,7 @@ function initializeSceneStudio(studio) {
       sceneStudioConfig[key] = key === 'canopy-palette' ? input.value : Number(input.value);
       renderSceneStudio();
       saveSceneStudio();
-      if (key === 'wind-frame-duration') restartSceneStudioAnimation();
+      if (key === 'wind-frame-duration' || key === 'day-wind-strength') restartSceneStudioAnimation();
       status.textContent = 'Draft saved in this browser.';
     });
   });
@@ -1116,12 +1167,17 @@ function initializeSceneStudio(studio) {
       'ground-y': -5.2,
       'ground-scale': 0.65,
       'ground-layer': 5,
+      'malinois-x': 49.5,
+      'malinois-y': 71.4,
+      'malinois-scale': 1.25,
+      'malinois-layer': 4,
+      'day-wind-strength': 2,
       'wind-frame-duration': 260
     });
     renderSceneStudio();
     restartSceneStudioAnimation();
     saveSceneStudio();
-    status.textContent = 'Draft restored to the composed night scene.';
+    status.textContent = 'Draft restored to the shared scene composition.';
   });
 
   studio.querySelector('[data-scene-action="copy"]').addEventListener('click', async () => {
@@ -1139,7 +1195,52 @@ function initializeSceneStudio(studio) {
 }
 
 function startSceneStudioAnimation(studio, config) {
-  const frames = {
+  const dayFrames = {
+    'tree-sway': [
+      'assets/pixel/home/tree-day-wind-v6-00.png',
+      'assets/pixel/home/tree-day-wind-v6-01.png',
+      'assets/pixel/home/tree-day-wind-v6-02.png',
+      'assets/pixel/home/tree-day-wind-v6-03.png',
+      'assets/pixel/home/tree-day-wind-v6-04.png',
+      'assets/pixel/home/tree-day-wind-v6-05.png',
+      'assets/pixel/home/tree-day-wind-v6-06.png',
+      'assets/pixel/home/tree-day-wind-v6-07.png'
+    ],
+    'meadow-sway': [
+      'assets/pixel/home/meadow-day-wind-v6-00.png',
+      'assets/pixel/home/meadow-day-wind-v6-01.png',
+      'assets/pixel/home/meadow-day-wind-v6-02.png',
+      'assets/pixel/home/meadow-day-wind-v6-03.png',
+      'assets/pixel/home/meadow-day-wind-v6-04.png',
+      'assets/pixel/home/meadow-day-wind-v6-05.png',
+      'assets/pixel/home/meadow-day-wind-v6-06.png',
+      'assets/pixel/home/meadow-day-wind-v6-07.png'
+    ]
+  };
+  const strongDayFrames = {
+    'tree-sway': [
+      'assets/pixel/home/tree-day-wind-v7-00.png',
+      'assets/pixel/home/tree-day-wind-v7-01.png',
+      'assets/pixel/home/tree-day-wind-v7-02.png',
+      'assets/pixel/home/tree-day-wind-v7-03.png',
+      'assets/pixel/home/tree-day-wind-v7-04.png',
+      'assets/pixel/home/tree-day-wind-v7-05.png',
+      'assets/pixel/home/tree-day-wind-v7-06.png',
+      'assets/pixel/home/tree-day-wind-v7-07.png'
+    ],
+    'meadow-sway': [
+      'assets/pixel/home/meadow-day-wind-v7-00.png',
+      'assets/pixel/home/meadow-day-wind-v7-01.png',
+      'assets/pixel/home/meadow-day-wind-v7-02.png',
+      'assets/pixel/home/meadow-day-wind-v7-03.png',
+      'assets/pixel/home/meadow-day-wind-v7-04.png',
+      'assets/pixel/home/meadow-day-wind-v7-05.png',
+      'assets/pixel/home/meadow-day-wind-v7-06.png',
+      'assets/pixel/home/meadow-day-wind-v7-07.png'
+    ]
+  };
+  const dayFrameDurations = [1120, 180, 180, 300, 220, 180, 620, 260];
+  const nightFrames = {
     'tree-sway': [
       'assets/pixel/home/tree-sway-v1-00.png',
       'assets/pixel/home/tree-sway-v1-01.png',
@@ -1152,10 +1253,16 @@ function startSceneStudioAnimation(studio, config) {
       'assets/pixel/home/meadow-sway-v2-02.png'
     ]
   };
+  const dayWindStrength = Math.max(1, Math.min(3, Math.round(config['day-wind-strength'] || 2)));
+  const dayFrameSequence = dayWindStrength === 1 ? [0, 0, 1, 2, 1, 0, 0, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+  const frames = isDaySceneStudio ? (dayWindStrength === 3 ? strongDayFrames : dayFrames) : nightFrames;
   const animatedImages = [...studio.querySelectorAll('[data-studio-animation]')];
   const saberImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'saber-idle');
+  const malinoisTailImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-tail');
+  const malinoisHeadImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-head');
+  const malinoisBellyImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-belly');
   const saberEyes = [...studio.querySelectorAll('[data-saber-eye-layer]')];
-  const layers = animatedImages.filter((image) => image.dataset.studioAnimation !== 'saber-idle').map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
+  const layers = animatedImages.filter((image) => !['saber-idle', 'malinois-tail', 'malinois-head', 'malinois-belly'].includes(image.dataset.studioAnimation)).map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frameIndex = 0;
   let timer = 0;
@@ -1163,7 +1270,8 @@ function startSceneStudioAnimation(studio, config) {
   const render = () => {
     layers.forEach((layer) => {
       if (!layer.frames) return;
-      const frame = layer.frames[frameIndex % layer.frames.length];
+      const sourceFrameIndex = isDaySceneStudio ? dayFrameSequence[frameIndex % dayFrameSequence.length] : frameIndex;
+      const frame = layer.frames[sourceFrameIndex % layer.frames.length];
       layer.image.src = frame;
     });
   };
@@ -1174,7 +1282,9 @@ function startSceneStudioAnimation(studio, config) {
       frameIndex += 1;
       render();
       schedule();
-    }, config['wind-frame-duration']);
+    }, isDaySceneStudio
+      ? Math.max(80, Math.round(dayFrameDurations[dayFrameSequence[frameIndex % dayFrameSequence.length]] * config['wind-frame-duration'] / 260))
+      : config['wind-frame-duration']);
   };
   const restart = () => {
     frameIndex = 0;
@@ -1183,9 +1293,76 @@ function startSceneStudioAnimation(studio, config) {
   };
 
   motionPreference.addEventListener('change', restart);
-  startSaberAnimation(saberImages, saberEyes, motionPreference, config['wind-frame-duration']);
+  if (isDaySceneStudio) startMalinoisAnimation(malinoisTailImages, malinoisHeadImages, malinoisBellyImages, motionPreference);
+  else startSaberAnimation(saberImages, saberEyes, motionPreference, config['wind-frame-duration']);
   restart();
   return restart;
+}
+
+function startMalinoisAnimation(tailImages, headImages, bellyImages, motionPreference) {
+  if (!tailImages.length || !headImages.length || !bellyImages.length) return;
+
+  const tailFrames = Array.from({ length: 8 }, (_, index) => `assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`);
+  const headFrames = Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`);
+  const bellyFrames = Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`);
+  const pantSequence = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+  const pantFrameDurations = [340, 150, 150, 160, 170, 180, 220, 300, 240, 300, 240, 200, 180, 160, 360];
+  const idleLoopsBeforePant = 3;
+  let tailFrameIndex = 0;
+  let idleLoops = 0;
+  let isPanting = false;
+  let tailTimer = 0;
+  let pantTimer = 0;
+
+  const setSource = (images, source) => images.forEach((image) => { image.src = source; });
+  const renderTail = () => setSource(tailImages, tailFrames[tailFrameIndex]);
+  const renderPantFrame = (index) => {
+    setSource(headImages, headFrames[index]);
+    setSource(bellyImages, bellyFrames[index]);
+  };
+  const completePant = () => {
+    isPanting = false;
+    idleLoops = 0;
+    renderPantFrame(0);
+  };
+  const playPant = (sequenceIndex = 0) => {
+    const frameIndex = pantSequence[sequenceIndex];
+    renderPantFrame(frameIndex);
+    if (motionPreference.matches || sequenceIndex === pantSequence.length - 1) {
+      if (!motionPreference.matches) pantTimer = window.setTimeout(completePant, pantFrameDurations[sequenceIndex]);
+      return;
+    }
+    pantTimer = window.setTimeout(() => playPant(sequenceIndex + 1), pantFrameDurations[sequenceIndex]);
+  };
+  const scheduleTail = () => {
+    window.clearTimeout(tailTimer);
+    if (motionPreference.matches) return;
+    tailTimer = window.setTimeout(() => {
+      tailFrameIndex = (tailFrameIndex + 1) % tailFrames.length;
+      renderTail();
+      if (tailFrameIndex === 0 && !isPanting) {
+        idleLoops += 1;
+        if (idleLoops >= idleLoopsBeforePant) {
+          isPanting = true;
+          playPant();
+        }
+      }
+      scheduleTail();
+    }, 260);
+  };
+  const restart = () => {
+    window.clearTimeout(tailTimer);
+    window.clearTimeout(pantTimer);
+    tailFrameIndex = 0;
+    idleLoops = 0;
+    isPanting = false;
+    renderTail();
+    renderPantFrame(0);
+    scheduleTail();
+  };
+
+  motionPreference.addEventListener('change', restart);
+  restart();
 }
 
 function createCanopySparkles(container, { count = 38, scale = 1 } = {}) {
