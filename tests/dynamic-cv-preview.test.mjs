@@ -588,7 +588,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.73');
+  assert.equal(packageJson.version, '0.1.74');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -1747,4 +1747,13 @@ test('uses paper figures as visual evidence and keeps a two-column construction 
   assert.doesNotMatch(html, /progress\.cases/);
   assert.doesNotMatch(html, /build-status-timeline/);
   assert.match(css, /\.project-detail-visual--paper img \{[\s\S]*object-fit:\s*contain/);
+
+test('records the two published easter eggs and the unfinished daytime scene in the build log', () => {
+  const html = read('index.html');
+  const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
+
+  assert.match(html, /Two hidden interactions have joined the site:.*Saber/);
+  assert.match(translations['zh-CN']['progress.current.scene'], /Saber/);
+  assert.equal(translations['zh-CN']['progress.next.timeOfDay'].includes('\u767d\u5929\u89c6\u89c9\u4ecd\u5728\u5236\u4f5c\u4e2d'), true);
+});
 });
