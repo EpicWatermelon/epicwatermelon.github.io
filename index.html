@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700;6..96,800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="assets/css/dynamic-cv.css?v=0.1.74" />
-    <script src="assets/js/i18n.js?v=0.1.74" defer></script>
-    <script src="assets/js/dynamic-cv.js?v=0.1.74" defer></script>
+    <link rel="stylesheet" href="assets/css/dynamic-cv.css?v=0.1.75" />
+    <script src="assets/js/i18n.js?v=0.1.75" defer></script>
+    <script src="assets/js/dynamic-cv.js?v=0.1.75" defer></script>
   </head>
   <body data-active-chapter="home" data-scroll-motion="enabled">
     <a class="skip-link" href="#main-content" data-i18n="skip.content">Skip to content</a>
@@ -188,15 +188,15 @@
       <section class="chapter chapter-education" id="education" data-chapter="education" aria-labelledby="education-title">
         <div class="chapter-grid">
           <div class="chapter-copy">
-            <p class="eyebrow" data-i18n="background.eyebrow">02 / academic / professional</p>
-            <h2 id="education-title" data-i18n-html="background.title">Academic<br /><i>Background</i></h2>
+            <p class="eyebrow" data-i18n="background.eyebrow">02 / Path</p>
+            <h2 id="education-title" data-i18n-html="background.title">Profile</h2>
             <p class="section-statement" data-i18n="background.statement">Training and research experience across biomedical engineering, ophthalmic imaging, and applied computer vision.</p>
             <p class="chapter-note" data-i18n="background.note">Across these settings, I have focused on turning image signals into reliable clinical and operational decisions.</p>
           </div>
           <div class="background-index-grid" aria-label="Background details" data-i18n-aria-label="background.gridLabel">
             <button class="background-index-card" type="button" data-path-open aria-haspopup="dialog" aria-controls="path-history-dialog">
               <span class="background-index-number">01</span>
-              <strong data-i18n="background.history.title">Education / Experience</strong>
+              <strong data-i18n="background.history.title">Education & Career</strong>
               <small data-i18n="background.history.subtitle">Degrees and research roles</small>
               <span class="background-index-action"><span data-i18n="action.open">Open</span> <span aria-hidden="true">↗</span></span>
             </button>
@@ -219,7 +219,7 @@
       <section class="chapter chapter-ophthalmic" id="ophthalmic" data-chapter="ophthalmic" aria-labelledby="ophthalmic-title">
         <div class="chapter-grid">
           <div class="chapter-copy">
-            <p class="eyebrow" data-i18n="ophthalmic.eyebrow">03 / vision for care</p>
+            <p class="eyebrow" data-i18n="ophthalmic.eyebrow">03 / ophthalmic imaging</p>
             <h2 id="ophthalmic-title" data-i18n-html="ophthalmic.title">Ophthalmic<br /><i>Vision</i></h2>
             <p class="section-statement" data-i18n="ophthalmic.statement">From an image signal to a clinically meaningful measurement.</p>
             <div class="project-case-list" aria-label="Ophthalmic project cases" data-i18n-aria-label="ophthalmic.casesLabel">
@@ -230,9 +230,24 @@
               </button>
               <button class="project-case-card" type="button" data-project-open="choroidal-oct-analysis" aria-haspopup="dialog" aria-controls="choroidal-oct-analysis-dialog">
                 <span class="project-case-index" data-i18n="case.02">Case 02</span>
-                <span class="project-case-title" data-i18n="ophthalmic.case2.title">Deep Learning–Based Choroidal OCT Analysis</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case2.title">OCT Choroidal Segmentation Algorithm</span>
                 <span class="project-case-action"><span data-i18n="action.openCase">Open case</span> <span aria-hidden="true">↗</span></span>
               </button>
+              <article class="project-case-card project-case-card--placeholder" aria-label="OCT Choroidal Vessel Segmentation Algorithm, in development" data-i18n-aria-label="ophthalmic.case3.label">
+                <span class="project-case-index" data-i18n="case.03">Case 03</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case3.title">OCT Choroidal Vessel Segmentation Algorithm</span>
+                <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
+              <article class="project-case-card project-case-card--placeholder" aria-label="OCT Choroidal Analysis Platform, in development" data-i18n-aria-label="ophthalmic.case4.label">
+                <span class="project-case-index" data-i18n="case.04">Case 04</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case4.title">OCT Choroidal Analysis Platform</span>
+                <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
+              <article class="project-case-card project-case-card--placeholder" aria-label="DIMS Myopia Prediction Statistical Model, in development" data-i18n-aria-label="ophthalmic.case5.label">
+                <span class="project-case-index" data-i18n="case.05">Case 05</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case5.title">DIMS Myopia Prediction Statistical Model</span>
+                <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
             </div>
           </div>
 
@@ -250,15 +265,25 @@
       <section class="chapter chapter-industrial" id="industrial" data-chapter="industrial" aria-labelledby="industrial-title">
         <div class="chapter-grid">
           <div class="chapter-copy">
-            <p class="eyebrow" data-i18n="industrial.eyebrow">04 / vision on the line</p>
+            <p class="eyebrow" data-i18n="industrial.eyebrow">04 / industrial inspection</p>
             <h2 id="industrial-title" data-i18n-html="industrial.title">Industrial<br /><i>Vision</i></h2>
             <p class="section-statement" data-i18n="industrial.statement">Computer vision for quality inspection in real production conditions.</p>
             <div class="project-case-list" aria-label="Industrial project cases" data-i18n-aria-label="industrial.casesLabel">
               <button class="project-case-card" type="button" data-project-open="battery-terminal" aria-haspopup="dialog" aria-controls="battery-terminal-dialog">
                 <span class="project-case-index" data-i18n="case.01">Case 01</span>
-                <span class="project-case-title" data-i18n="industrial.case1.title">Battery Terminal Inspection Concept</span>
+                <span class="project-case-title" data-i18n="industrial.case1.title">Battery Cover Terminal Weld Seam Defect Inspection</span>
                 <span class="project-case-action"><span data-i18n="action.openCase">Open case</span> <span aria-hidden="true">↗</span></span>
               </button>
+              <article class="project-case-card project-case-card--placeholder" aria-label="Battery Cover Terminal Reverse-Side Adhesive Ring Defect Inspection, in development" data-i18n-aria-label="industrial.case2.label">
+                <span class="project-case-index" data-i18n="case.02">Case 02</span>
+                <span class="project-case-title" data-i18n="industrial.case2.title">Battery Cover Terminal Reverse-Side Adhesive Ring Defect Inspection</span>
+                <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
+              <article class="project-case-card project-case-card--placeholder" aria-label="Battery Cover Safety Vent Weld Seam Defect Inspection, in development" data-i18n-aria-label="industrial.case3.label">
+                <span class="project-case-index" data-i18n="case.03">Case 03</span>
+                <span class="project-case-title" data-i18n="industrial.case3.title">Battery Cover Safety Vent Weld Seam Defect Inspection</span>
+                <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
             </div>
           </div>
 
@@ -276,6 +301,14 @@
         <div class="contact-panel">
           <p class="eyebrow" data-i18n="contact.eyebrow">05 / contact</p>
           <h2 id="contact-title" class="contact-title-easter-egg" lang="la" tabindex="0" role="button" data-contact-easter-egg-trigger data-i18n-html="contact.title" data-i18n-lang="contact.title.lang">Fata viam<br /><i>invenient.</i></h2>
+          <span class="contact-easter-egg-progress" data-contact-easter-egg-progress data-contact-progress="0" aria-hidden="true">
+            <span class="contact-easter-egg-pixel"></span>
+            <span class="contact-easter-egg-pixel"></span>
+            <span class="contact-easter-egg-pixel"></span>
+            <span class="contact-easter-egg-pixel"></span>
+            <span class="contact-easter-egg-pixel"></span>
+          </span>
+          <span class="visually-hidden" data-contact-easter-egg-status aria-live="polite"></span>
           <p data-i18n="contact.invitation">Open to research collaborations and engineering conversations across ophthalmic imaging, computer vision, and industrial inspection.</p>
           <div class="contact-links">
             <a href="mailto:zheng-ji.liu@connect.polyu.hk"><span data-i18n="contact.email">Email</span> <span>↗</span></a>
@@ -377,7 +410,7 @@
           <header class="project-detail-header">
             <div>
               <p class="eyebrow" data-i18n="project.choroid.eyebrow">03.02 / ophthalmic vision case</p>
-              <h2 id="choroidal-oct-analysis-title" data-i18n-html="project.choroid.title">Deep Learning–Based<br /><i>Choroidal OCT Analysis</i></h2>
+              <h2 id="choroidal-oct-analysis-title" data-i18n-html="project.choroid.title">OCT Choroidal<br /><i>Segmentation Algorithm</i></h2>
             </div>
             <button class="project-detail-close" type="button" data-project-close aria-label="Close choroidal OCT project" data-i18n-aria-label="project.choroid.close">
               <span aria-hidden="true"></span>
@@ -451,7 +484,7 @@
           <header class="project-detail-header">
             <div>
               <p class="eyebrow" data-i18n="project.battery.eyebrow">04.01 / industrial vision case</p>
-              <h2 id="battery-terminal-title" data-i18n-html="project.battery.title">Battery Terminal<br /><i>Inspection Concept</i></h2>
+              <h2 id="battery-terminal-title" data-i18n-html="project.battery.title">Battery Cover Terminal<br /><i>Weld Seam Defect Inspection</i></h2>
             </div>
             <button class="project-detail-close" type="button" data-project-close aria-label="Close battery terminal project" data-i18n-aria-label="project.battery.close">
               <span aria-hidden="true"></span>
@@ -548,9 +581,9 @@
         <header class="project-detail-header">
           <div>
             <p class="eyebrow" data-i18n="history.eyebrow">02.01 / background</p>
-            <h2 id="path-history-title" data-i18n="history.title">Education / Experience</h2>
+            <h2 id="path-history-title" data-i18n="history.title">Education & Career</h2>
           </div>
-          <button class="project-detail-close" type="button" data-project-close aria-label="Close education and experience detail" data-i18n-aria-label="history.close">
+          <button class="project-detail-close" type="button" data-project-close aria-label="Close education and career detail" data-i18n-aria-label="history.close">
             <span aria-hidden="true"></span>
           </button>
         </header>

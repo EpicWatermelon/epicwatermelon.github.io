@@ -71,8 +71,8 @@
       'language.chinese': '中文',
       'language.changed.en': 'Language changed to English.',
       'language.changed.zh': '语言已切换为中文。',
-      'progress.label': '网站建设进度：40%',
-      'progress.text': '网站建设中 <b>40%</b>',
+      'progress.label': '网站建设进度：45%',
+      'progress.text': '网站建设中 <b>45%</b>',
       'progress.close': '关闭建设日志',
       'progress.eyebrow': '00.30 / 建设日志',
       'progress.title': '仍在<br /><i>建设中</i>',
@@ -100,12 +100,12 @@
       'bio.figure.alt': 'Q 版 Saber 抱着一大碗米饭。',
       'bio.figure.caption': '始于好奇。<br />饭碗依然要大。',
       'scroll.enter': '继续滚动',
-      'background.eyebrow': '02 / 学术 / 职业',
-      'background.title': '学术<br /><i>经历</i>',
+      'background.eyebrow': '02 / 轨迹',
+      'background.title': '个人履历',
       'background.statement': '横跨生物医学工程、眼科影像与应用计算机视觉的学习和研究经历。',
       'background.note': '在这些经历中，我持续探索如何将图像信号转化为可靠的临床判断与工程决策。',
       'background.gridLabel': '履历详情',
-      'background.history.title': '教育 / 经历',
+      'background.history.title': '教育 / 职业经历',
       'background.history.subtitle': '学位与科研岗位',
       'background.skills.title': '技能',
       'background.skills.subtitle': '工具、方法与语言',
@@ -113,22 +113,36 @@
       'background.publications.subtitle': '期刊论文、会议论文与会议摘要',
       'action.open': '打开',
       'action.openCase': '查看项目',
+      'action.inDevelopment': '建设中',
       'case.01': '项目 01',
       'case.02': '项目 02',
-      'ophthalmic.eyebrow': '03 / 为医疗而视觉',
+      'case.03': '项目 03',
+      'case.04': '项目 04',
+      'case.05': '项目 05',
+      'ophthalmic.eyebrow': '03 / 眼科影像',
       'ophthalmic.title': '眼科<br /><i>视觉</i>',
       'ophthalmic.statement': '从图像信号出发，得到具有临床意义的测量结果。',
       'ophthalmic.casesLabel': '眼科视觉项目',
       'ophthalmic.case1.title': 'Corvis ST 角膜图像超分辨率',
-      'ophthalmic.case2.title': '基于深度学习的脉络膜 OCT 分析',
+      'ophthalmic.case2.title': 'OCT 图像脉络膜分割算法',
+      'ophthalmic.case3.title': 'OCT 图像脉络膜血管分割算法',
+      'ophthalmic.case4.title': 'OCT 图像脉络膜分析平台',
+      'ophthalmic.case5.title': 'DIMS 近视预测统计模型',
+      'ophthalmic.case3.label': 'OCT 图像脉络膜血管分割算法，建设中',
+      'ophthalmic.case4.label': 'OCT 图像脉络膜分析平台，建设中',
+      'ophthalmic.case5.label': 'DIMS 近视预测统计模型，建设中',
       'ophthalmic.figure.octAlt': '风格化的光学相干断层扫描设备。',
       'ophthalmic.figure.saberAlt': '拿着圆框眼镜的 Q 版 Saber。',
       'ophthalmic.figure.caption': '观察 / 重建 / 转化',
-      'industrial.eyebrow': '04 / 产线上的视觉',
+      'industrial.eyebrow': '04 / 工业检测',
       'industrial.title': '工业<br /><i>视觉</i>',
       'industrial.statement': '面向真实生产条件下质量检测的计算机视觉。',
       'industrial.casesLabel': '工业视觉项目',
-      'industrial.case1.title': '电池极柱检测方案',
+      'industrial.case1.title': '电池顶盖极柱焊道缺陷检测',
+      'industrial.case2.title': '电池顶盖极柱反面胶圈缺陷检测',
+      'industrial.case3.title': '电池顶盖防爆阀焊道缺陷检测',
+      'industrial.case2.label': '电池顶盖极柱反面胶圈缺陷检测，建设中',
+      'industrial.case3.label': '电池顶盖防爆阀焊道缺陷检测，建设中',
       'industrial.figure.lineAlt': '风格化的工厂视觉检测输送线。',
       'industrial.figure.saberAlt': '拿着扳手的 Q 版 Saber。',
       'industrial.figure.caption': '检测 / 判断 / 重复',
@@ -186,7 +200,7 @@
       'project.choroid.mapMeasurementNote': '血管与形态指标',
       'project.choroid.mapOutput': '干预反应',
       'project.choroid.eyebrow': '03.02 / 眼科视觉项目',
-      'project.choroid.title': '基于深度学习的<br /><i>脉络膜 OCT 分析</i>',
+      'project.choroid.title': 'OCT 图像脉络膜<br /><i>分割算法</i>',
       'project.choroid.close': '关闭脉络膜 OCT 项目',
       'project.choroid.lede': '我们建立了一套 OCT 分析系统，用于量化脉络膜变化，并支持对近视控制干预进行客观评估。',
       'institution.polyu': '香港理工大学',
@@ -213,7 +227,7 @@
       'project.battery.mapOutput': '候选异常',
       'project.battery.mapOutputNote': '边缘与纹理证据',
       'project.battery.eyebrow': '04.01 / 工业视觉项目',
-      'project.battery.title': '电池极柱<br /><i>检测方案</i>',
+      'project.battery.title': '电池顶盖极柱<br /><i>焊道缺陷检测</i>',
       'project.battery.close': '关闭电池极柱项目',
       'project.battery.lede': '我们开发了一套机器视觉方案，用于从电池极柱强烈的同心圆结构中分离局部表面与边缘异常。',
       'project.battery.company': '保密电池制造企业',
@@ -230,9 +244,9 @@
       'tag.annularUnwrapping': '环形展开',
       'tag.textureAnalysis': '纹理分析',
       'project.source': '阅读论文 ↗',
-      'history.close': '关闭教育与经历详情',
+      'history.close': '关闭教育与职业经历详情',
       'history.eyebrow': '02.01 / 履历',
-      'history.title': '教育 / 经历',
+      'history.title': '教育 / 职业经历',
       'history.education': '教育经历',
       'history.polyuCrest': '香港理工大学校徽',
       'history.szuCrest': '深圳大学校徽',
@@ -312,30 +326,101 @@
     });
   }
 
+  function updateContactEasterEggAvailability(document, language = document.documentElement.lang) {
+    const trigger = document.querySelector('[data-contact-easter-egg-trigger]');
+    if (!trigger) return false;
+
+    const isEnabled = language === 'zh-CN';
+    if (trigger.dataset) trigger.dataset.contactEasterEggEnabled = String(isEnabled);
+    trigger.setAttribute?.('aria-disabled', String(!isEnabled));
+    trigger.setAttribute?.('tabindex', isEnabled ? '0' : '-1');
+    return isEnabled;
+  }
+
   function initializeContactEasterEgg(document) {
     const trigger = document.querySelector('[data-contact-easter-egg-trigger]');
     if (!trigger) return null;
 
+    const progress = document.querySelector('[data-contact-easter-egg-progress]');
+    const status = document.querySelector('[data-contact-easter-egg-status]');
+    const clicksToUnlock = 6;
     let originalTitle = null;
     let clickCount = 0;
     let lyricIndex = 0;
     let isLocked = false;
+
+    const syncAvailability = () => updateContactEasterEggAvailability(document);
+    const readCurrentTitle = () => (
+      typeof trigger.innerHTML === 'string' ? trigger.innerHTML : trigger.textContent
+    );
+    const setStatus = (message) => {
+      if (status) status.textContent = message;
+    };
+    const replayClass = (className) => {
+      trigger.classList?.remove(className);
+      void trigger.offsetWidth;
+      trigger.classList?.add(className);
+    };
+    const applyPressFeedback = (stage) => {
+      if (trigger.dataset) trigger.dataset.contactStage = String(stage);
+      if (progress?.dataset) progress.dataset.contactProgress = String(Math.min(stage, clicksToUnlock - 1));
+      trigger.classList?.remove('is-contact-pressed', 'is-contact-gathering', 'is-contact-unlocking');
+
+      if (stage === clicksToUnlock) {
+        replayClass('is-contact-unlocking');
+        return;
+      }
+
+      replayClass('is-contact-pressed');
+      if (stage === clicksToUnlock - 1) trigger.classList?.add('is-contact-gathering');
+    };
+    const swapWord = (word, isShout = false) => {
+      trigger.classList?.remove('is-contact-unlocking', 'is-contact-shouting');
+      replayClass('is-word-swapping');
+      trigger.textContent = word;
+      if (isShout) replayClass('is-contact-shouting');
+    };
+    const restoreTitle = () => {
+      if ('innerHTML' in trigger) trigger.innerHTML = originalTitle;
+      else trigger.textContent = originalTitle;
+      trigger.classList?.remove('is-word-swapping', 'is-contact-unlocking', 'is-contact-gathering', 'is-contact-shouting');
+      if (trigger.dataset) trigger.dataset.contactUnlocked = 'false';
+      trigger.setAttribute?.('aria-pressed', 'false');
+      setStatus(document.documentElement.lang === 'zh-CN' ? '彩蛋结束' : 'Contact easter egg complete');
+      isLocked = true;
+    };
+
     const revealOrRotate = () => {
-      if (document.documentElement.lang !== 'zh-CN' || isLocked) return;
-      if (clickCount < 5) {
-        if (clickCount === 0) originalTitle = trigger.innerHTML;
+      if (!syncAvailability()) return;
+      if (isLocked) return;
+      if (clickCount < clicksToUnlock) {
+        originalTitle = readCurrentTitle();
         clickCount += 1;
-        if (clickCount < 5) return;
+        applyPressFeedback(clickCount);
+
+        if (clickCount < clicksToUnlock) {
+          const remaining = clicksToUnlock - clickCount;
+          setStatus(document.documentElement.lang === 'zh-CN'
+            ? `还剩 ${remaining} 次星光回应`
+            : `${remaining} hidden beats remain`);
+          return;
+        }
+
+        if (trigger.dataset) trigger.dataset.contactUnlocked = 'true';
+        trigger.setAttribute?.('aria-pressed', 'true');
+        progress?.classList?.add('is-complete');
         trigger.textContent = contactEasterEggLyrics[lyricIndex];
+        setStatus(document.documentElement.lang === 'zh-CN' ? '联系页彩蛋已解锁' : 'Contact easter egg unlocked');
         return;
       }
+
       if (lyricIndex === contactEasterEggLyrics.length - 1) {
-        trigger.innerHTML = originalTitle;
-        isLocked = true;
+        restoreTitle();
         return;
       }
+
       lyricIndex = (lyricIndex + 1) % contactEasterEggLyrics.length;
-      trigger.textContent = contactEasterEggLyrics[lyricIndex];
+      swapWord(contactEasterEggLyrics[lyricIndex], lyricIndex === contactEasterEggLyrics.length - 1);
     };
 
     trigger.addEventListener('click', revealOrRotate);
@@ -345,6 +430,7 @@
         revealOrRotate();
       }
     });
+    syncAvailability();
     return revealOrRotate;
   }
 
@@ -356,6 +442,7 @@
 
     document.documentElement.lang = language;
     document.body.dataset.language = language === 'zh-CN' ? 'zh' : 'en';
+    updateContactEasterEggAvailability(document, language);
     document.querySelectorAll('[data-language-option]').forEach((button) => {
       button.setAttribute('aria-pressed', String(button.getAttribute('data-language-option') === language));
     });

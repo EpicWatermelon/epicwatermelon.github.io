@@ -182,6 +182,20 @@ function initializeTreeEasterEgg(motionPreference) {
   const clicksToTrigger = 10;
   const resetDelay = 1200;
   const rainDuration = 7800;
+  const pressDropCounts = [1, 1, 2, 2, 3, 3, 4, 5, 7];
+  const pressDropLifetime = 4200;
+  const canopyDropZones = [
+    { x: .43, y: .18, width: .14, height: .16 },
+    { x: .56, y: .09, width: .17, height: .19 },
+    { x: .71, y: .13, width: .15, height: .17 },
+    { x: .82, y: .24, width: .1, height: .16 },
+    { x: .6, y: .27, width: .14, height: .13 }
+  ];
+  const starPalette = [
+    { core: '#fff8c7', outline: '#f1b951', glow: 'rgb(255 210 91 / 58%)', tail: 'rgb(255 225 138 / 76%)' },
+    { core: '#fffdf2', outline: '#e8e1cf', glow: 'rgb(255 250 230 / 52%)', tail: 'rgb(255 252 238 / 72%)' },
+    { core: '#ffe6a3', outline: '#e6ad4d', glow: 'rgb(255 205 99 / 54%)', tail: 'rgb(255 225 159 / 74%)' }
+  ];
   let presses = 0;
   let resetTimer = 0;
   let rainTimer = 0;
@@ -198,29 +212,71 @@ function initializeTreeEasterEgg(motionPreference) {
     presses = 0;
     window.clearTimeout(resetTimer);
   };
+  const createTreePressFeedback = (stage, event) => {
+    const feedback = document.createElement('span');
+    const pressX = event.detail === 0 ? tree.clientWidth * .5 : event.offsetX;
+    const pressY = event.detail === 0 ? tree.clientHeight * .34 : event.offsetY;
+
+    feedback.className = 'tree-press-feedback';
+    feedback.style.left = `${pressX}px`;
+    feedback.style.top = `${pressY}px`;
+    feedback.style.setProperty('--tree-press-scale', (0.64 + stage * .13).toFixed(2));
+    feedback.dataset.treeStage = String(stage);
+    tree.append(feedback);
+    window.setTimeout(() => feedback.remove(), 680);
+  };
+  const summonPressDrops = (stage) => {
+    const dropCount = pressDropCounts[stage - 1];
+    if (!dropCount) return;
+
+    const homeRect = home.getBoundingClientRect();
+    const treeRect = treeScene.getBoundingClientRect();
+    const pointInZone = (zone, xRatio, yRatio) => ({
+      x: treeRect.left - homeRect.left + treeRect.width * (zone.x + zone.width * xRatio),
+      y: treeRect.top - homeRect.top + treeRect.height * (zone.y + zone.height * yRatio)
+    });
+    const stars = Array.from({ length: dropCount }, (_, index) => {
+      const star = document.createElement('span');
+      const color = starPalette[(stage * 2 + index) % starPalette.length];
+      const dropZone = canopyDropZones[Math.floor(Math.random() * canopyDropZones.length)];
+      const startPoint = pointInZone(dropZone, Math.random(), Math.random());
+      const stageLane = (Math.random() - .5) * (54 + stage * 4);
+      const minimumFallDistance = 260 + stage * 18;
+      const endPoint = {
+        x: startPoint.x + stageLane,
+        y: Math.min(homeRect.height - 18, startPoint.y + minimumFallDistance + Math.random() * 110)
+      };
+      const fallPath = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`;
+      const fallDuration = 2100 + stage * 65 + Math.round(Math.random() * 620);
+
+      star.className = 'fluorescent-rain-star fluorescent-rain-star--press';
+      star.style.setProperty('--star-fall-path', `path("${fallPath}")`);
+      star.style.setProperty('--star-core', color.core);
+      star.style.setProperty('--star-outline', color.outline);
+      star.style.setProperty('--star-glow', color.glow);
+      star.style.setProperty('--star-tail', color.tail);
+      star.style.setProperty('--star-duration', `${fallDuration}ms`);
+      star.style.setProperty('--star-delay', `${index * 48}ms`);
+      return star;
+    });
+
+    rain.append(...stars);
+    rain.classList.add('is-active');
+    window.setTimeout(() => {
+      stars.forEach((star) => star.remove());
+      if (!rain.childElementCount) rain.classList.remove('is-active');
+    }, pressDropLifetime);
+  };
   const summonRain = () => {
-    clearRain();
+    window.clearTimeout(rainTimer);
     const homeRect = home.getBoundingClientRect();
     const treeRect = treeScene.getBoundingClientRect();
     const saberRect = saber.getBoundingClientRect();
-    const canopyDropZones = [
-      { x: .43, y: .18, width: .14, height: .16 },
-      { x: .56, y: .09, width: .17, height: .19 },
-      { x: .71, y: .13, width: .15, height: .17 },
-      { x: .82, y: .24, width: .1, height: .16 },
-      { x: .6, y: .27, width: .14, height: .13 }
-    ];
     const saberPoint = {
       x: saberRect.left - homeRect.left + saberRect.width * .475,
       y: saberRect.top - homeRect.top + saberRect.height * .105
     };
-    const starPalette = [
-      { core: '#fff8c7', outline: '#f1b951', glow: 'rgb(255 210 91 / 58%)', tail: 'rgb(255 225 138 / 76%)' },
-      { core: '#c5e6ff', outline: '#82b9ff', glow: 'rgb(123 189 255 / 54%)', tail: 'rgb(183 220 255 / 72%)' },
-      { core: '#f6fbff', outline: '#d9e6ff', glow: 'rgb(220 239 255 / 54%)', tail: 'rgb(235 246 255 / 72%)' },
-      { core: '#ffb0a2', outline: '#ee735e', glow: 'rgb(255 122 104 / 48%)', tail: 'rgb(255 174 162 / 68%)' }
-    ];
-    const starColorOrder = [0, 0, 0, 0, 0, 1, 0, 2, 0, 3];
+    const starColorOrder = [0, 0, 0, 1, 0, 2, 0, 0, 1, 0];
     const stars = Array.from({ length: 24 }, (_, index) => {
       const star = document.createElement('span');
       const sourceProgress = (index * 37 % 101) / 100;
@@ -257,12 +313,12 @@ function initializeTreeEasterEgg(motionPreference) {
       return star;
     });
 
-    rain.replaceChildren(...stars);
+    rain.append(...stars);
     rain.classList.add('is-active');
     say('Fluorescent rain.', '荧光雨降临。');
     rainTimer = window.setTimeout(clearRain, rainDuration);
   };
-  const registerPress = () => {
+  const registerPress = (event) => {
     if (motionPreference.matches) {
       say('Fluorescent rain is disabled when reduced motion is enabled.', '减少动态效果已启用，荧光雨已关闭。');
       return;
@@ -270,11 +326,15 @@ function initializeTreeEasterEgg(motionPreference) {
 
     presses += 1;
     window.clearTimeout(resetTimer);
+    tree.dataset.treeStage = String(presses);
+    createTreePressFeedback(presses, event);
+
     if (presses >= clicksToTrigger) {
       resetPresses();
       summonRain();
       return;
     }
+    summonPressDrops(presses);
     resetTimer = window.setTimeout(resetPresses, resetDelay);
   };
 
