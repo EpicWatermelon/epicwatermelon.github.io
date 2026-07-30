@@ -588,7 +588,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.65');
+  assert.equal(packageJson.version, '0.1.72');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -669,13 +669,13 @@ test('uses a compact handoff that leaves the lowered ground visible', () => {
   assert.match(css, /\.chapter-home::after \{[^}]*height:\s*clamp\(72px, 10vh, 128px\)[^}]*linear-gradient\(180deg, transparent 0%, #03091b 90%\)/s);
 });
 
-test('shows the living CV construction status at forty percent', () => {
+test('shows the living CV construction status at forty-five percent', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 40%"/);
-  assert.match(html, /Site under construction <b>40%<\/b>/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*40%;/s);
+  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 45%"/);
+  assert.match(html, /Site under construction <b>45%<\/b>/);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*45%;/s);
 });
 
 test('covers tall viewports while continuously focusing the camera on the tree and Saber', () => {
@@ -1033,11 +1033,11 @@ test('shows the current construction progress and concise copyright footer', () 
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /aria-label="Site construction progress: 40%"/);
-  assert.match(html, /Site under construction <b>40%<\/b>/);
+  assert.match(html, /aria-label="Site construction progress: 45%"/);
+  assert.match(html, /Site under construction <b>45%<\/b>/);
   assert.match(html, /<p>© 2026 · Zhengji Liu<\/p>/);
   assert.doesNotMatch(html, /built as a living CV/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*40%;/s);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*45%;/s);
   assert.match(css, /footer \{[^}]*font-size:\s*11px;/s);
 });
 
@@ -1430,7 +1430,7 @@ test('uses Zhengji’s confirmed research voice across the public portfolio', ()
   assert.match(html, /We produced an explainable inspection concept and a validation plan/);
   assert.doesNotMatch(html, /I designed convolutional neural network methods|Produced an explainable inspection concept/);
   assert.match(html, /Synthesising 3D cardiac cine-MR images/);
-  assert.match(html, /Site under construction <b>40%<\/b>/);
+  assert.match(html, /Site under construction <b>45%<\/b>/);
   assert.match(html, /Vibe-coded with Codex/);
   assert.match(html, /Fata viam<br \/><i>invenient\.<\/i>/);
 });

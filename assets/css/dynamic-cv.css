@@ -318,9 +318,9 @@ footer {
 
 .site-build-progress b { color: var(--gold); font-weight: 500; }
 .site-build-progress .build-track { width: 128px; height: 2px; display: block; overflow: hidden; background: rgb(208 225 255 / 16%); }
-.site-build-progress .build-fill { width: 40%; height: 100%; display: block; background: linear-gradient(90deg, var(--gold), #fff6dc); box-shadow: 0 0 14px rgb(243 212 159 / 52%); }
+.site-build-progress .build-fill { width: 45%; height: 100%; display: block; background: linear-gradient(90deg, var(--gold), #fff6dc); box-shadow: 0 0 14px rgb(243 212 159 / 52%); }
 .site-build-progress:hover .build-fill,
-.site-build-progress:focus-visible .build-fill { width: 42%; }
+.site-build-progress:focus-visible .build-fill { width: 47%; }
 .site-build-progress:focus-visible { outline: 1px solid var(--gold); outline-offset: 7px; }
 
 .chapter {
