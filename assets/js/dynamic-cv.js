@@ -383,7 +383,7 @@ function initializeSaberThemeEasterEgg() {
     showStatus('Theme paused · tap Saber to continue', '主题曲已暂停 · 点击 Saber 继续');
   };
   const handleThemeVisibility = () => {
-    if (document.hidden || document.body.dataset.activeChapter !== 'home') pauseTheme();
+    if (document.hidden) pauseTheme();
   };
   const handleThemeEnded = () => {
     syncPlaybackState();
@@ -395,10 +395,6 @@ function initializeSaberThemeEasterEgg() {
   document.addEventListener('visibilitychange', handleThemeVisibility);
   window.addEventListener('pagehide', pauseTheme);
   window.addEventListener('resize', scheduleBoundsSync, { passive: true });
-  new MutationObserver(handleThemeVisibility).observe(document.body, {
-    attributes: true,
-    attributeFilter: ['data-active-chapter']
-  });
   if ('ResizeObserver' in window) new ResizeObserver(scheduleBoundsSync).observe(saber);
   syncPlaybackState();
   scheduleBoundsSync();

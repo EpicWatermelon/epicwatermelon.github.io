@@ -588,7 +588,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.72');
+  assert.equal(packageJson.version, '0.1.73');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
@@ -1704,12 +1704,13 @@ test('unlocks the supplied Saber theme after five progressively brighter presses
   assert.match(css, /@keyframes saber-theme-bloom[\s\S]*?box-shadow:\s*-14px 0[\s\S]*?box-shadow:\s*-46px 0/s);
 });
 
-test('pauses the Saber theme when the visitor leaves the home scene', () => {
+test('keeps the Saber theme playing across chapters until the visitor pauses it', () => {
   const script = read('assets/js/dynamic-cv.js');
 
   assert.match(script, /document\.addEventListener\('visibilitychange', handleThemeVisibility\);/);
-  assert.match(script, /attributeFilter: \['data-active-chapter'\]/);
-  assert.match(script, /if \(document\.hidden \|\| document\.body\.dataset\.activeChapter !== 'home'\) pauseTheme\(\);/);
+  assert.match(script, /if \(document\.hidden\) pauseTheme\(\);/);
+  assert.doesNotMatch(script, /document\.body\.dataset\.activeChapter !== 'home'/);
+  assert.doesNotMatch(script, /new MutationObserver\(handleThemeVisibility\)/);
   assert.match(script, /audio\.addEventListener\('ended', handleThemeEnded\);/);
   assert.match(script, /trigger\.setAttribute\('aria-pressed', String\(!audio\.paused\)\);/);
 });
