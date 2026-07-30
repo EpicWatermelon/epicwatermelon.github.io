@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -112,6 +112,36 @@ test('rewards ten rapid tree presses with a slow canopy-star rain that occasiona
   assert.match(css, /@keyframes fluorescent-star-fall[\s\S]*?offset-distance:\s*100%/);
   assert.doesNotMatch(css, /\.fluorescent-rain-drop/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-fluorescent-rain \{ display:\s*none;/);
+});
+
+test('unlocks the supplied Saber theme after five visibly distinct pixel cues', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+  const audioPath = 'assets/audio/kishiou-no-hokori.mp3';
+
+  assert.ok(existsSync(file(audioPath)), 'the user-supplied Saber theme must exist');
+  assert.ok(statSync(file(audioPath)).size > 1_000_000, 'the Saber theme must contain the supplied recording');
+  assert.match(html, /<button class="home-saber-theme-trigger"[^>]*data-saber-theme-trigger[^>]*aria-label="Saber — press five times"[^>]*aria-pressed="false"[^>]*>/);
+  assert.match(html, /<audio data-saber-theme preload="none">[\s\S]*<source src="assets\/audio\/kishiou-no-hokori\.mp3" type="audio\/mpeg" \/>[\s\S]*<\/audio>/);
+  assert.match(html, /data-saber-theme-status[^>]*aria-live="polite"/);
+  assert.match(script, /function initializeSaberThemeEasterEgg\(\)/);
+  assert.match(script, /const clicksToUnlock = 5;/);
+  assert.match(script, /const pressFeedbackDurations = \[0, 260, 300, 340, 560, 820\];/);
+  assert.match(script, /trigger\.dataset\.themeStage = String\(pressLevel\);/);
+  assert.match(script, /pressFeedbackDurations\[pressLevel\]/);
+  assert.match(script, /await audio\.play\(\);/);
+  assert.match(script, /showStatus\('Now playing · 孤独な巡礼', '正在播放 · 孤独な巡礼'\);/);
+  assert.doesNotMatch(script, /騎士王の誇り|The Pride of the King of Knights/);
+  assert.match(script, /if \(document\.hidden \|\| document\.body\.dataset\.activeChapter !== 'home'\) pauseTheme\(\);/);
+  assert.match(css, /\.home-saber-theme-trigger \{[^}]*z-index:\s*2;[^}]*cursor:\s*pointer;/s);
+  assert.match(css, /\.home-saber-theme-trigger::before,\s*\.home-saber-theme-trigger::after \{[^}]*top:\s*10\.5%;[^}]*left:\s*47\.5%;/s);
+  assert.match(css, /\[data-theme-stage="1"\] \{[^}]*--theme-press-scale:\s*\.7;/s);
+  assert.match(css, /\[data-theme-stage="5"\] \{[^}]*--theme-press-scale:\s*3\.2;/s);
+  assert.match(css, /\[data-theme-stage="4"\]\.is-pressed::before \{ animation:\s*saber-theme-gather 520ms steps\(5, end\); \}/);
+  assert.match(css, /\[data-theme-stage="5"\]\.is-pressed::before \{ animation:\s*saber-theme-bloom 780ms steps\(7, end\); \}/);
+  assert.match(css, /@keyframes saber-theme-gather[\s\S]*?box-shadow:\s*-34px -24px[\s\S]*?box-shadow:\s*-9px -6px/s);
+  assert.match(css, /@keyframes saber-theme-bloom[\s\S]*?box-shadow:\s*-14px 0[\s\S]*?box-shadow:\s*-46px 0/s);
 });
 
 test('provides a local-only Scene Studio for manually positioning the layered night hero', () => {
@@ -414,7 +444,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const script = read('assets/js/dynamic-cv.js');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.44');
+  assert.equal(packageJson.version, '0.1.45');
   assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);

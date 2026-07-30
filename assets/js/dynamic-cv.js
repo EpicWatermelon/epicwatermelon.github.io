@@ -283,6 +283,131 @@ function initializeTreeEasterEgg(motionPreference) {
   });
 }
 
+function initializeSaberThemeEasterEgg() {
+  const home = document.querySelector('#home');
+  const saber = home?.querySelector('.home-scene-saber');
+  const trigger = home?.querySelector('[data-saber-theme-trigger]');
+  const audio = home?.querySelector('[data-saber-theme]');
+  const status = home?.querySelector('[data-saber-theme-status]');
+  if (!home || !saber || !trigger || !audio || !status) return;
+
+  const clicksToUnlock = 5;
+  const pressFeedbackDurations = [0, 260, 300, 340, 560, 820];
+  const statusDuration = 3600;
+  let presses = 0;
+  let unlocked = false;
+  let statusTimer = 0;
+  let pressTimer = 0;
+  let resizeFrame = 0;
+
+  audio.volume = .45;
+
+  const localized = (english, chinese) => (
+    document.documentElement.lang.startsWith('zh') ? chinese : english
+  );
+  const showStatus = (english, chinese, persistent = false) => {
+    window.clearTimeout(statusTimer);
+    status.textContent = localized(english, chinese);
+    status.classList.add('is-visible');
+    if (!persistent) {
+      statusTimer = window.setTimeout(() => status.classList.remove('is-visible'), statusDuration);
+    }
+  };
+  const syncTriggerBounds = () => {
+    const homeRect = home.getBoundingClientRect();
+    const saberRect = saber.getBoundingClientRect();
+    trigger.style.left = `${saberRect.left - homeRect.left}px`;
+    trigger.style.top = `${saberRect.top - homeRect.top}px`;
+    trigger.style.width = `${saberRect.width}px`;
+    trigger.style.height = `${saberRect.height}px`;
+    status.style.left = `${saberRect.left - homeRect.left + saberRect.width * .475}px`;
+    status.style.top = `${saberRect.top - homeRect.top + saberRect.height * .105}px`;
+  };
+  const scheduleBoundsSync = () => {
+    window.cancelAnimationFrame(resizeFrame);
+    resizeFrame = window.requestAnimationFrame(syncTriggerBounds);
+  };
+  const syncPlaybackState = () => {
+    const playing = !audio.paused;
+    trigger.setAttribute('aria-pressed', String(playing));
+    trigger.classList.toggle('is-playing', playing);
+    if (!unlocked) {
+      trigger.setAttribute('aria-label', localized(
+        `Saber — ${clicksToUnlock - presses} presses until the hidden melody`,
+        `Saber——再点 ${clicksToUnlock - presses} 次唤醒隐藏旋律`
+      ));
+      return;
+    }
+    trigger.setAttribute('aria-label', playing
+      ? localized('Saber — pause her theme', 'Saber——暂停她的主题曲')
+      : localized('Saber — play her theme', 'Saber——播放她的主题曲'));
+  };
+  const pauseTheme = () => {
+    if (!audio.paused) audio.pause();
+    syncPlaybackState();
+  };
+  const playTheme = async () => {
+    if (audio.ended) audio.currentTime = 0;
+    try {
+      await audio.play();
+      syncPlaybackState();
+      showStatus('Now playing · 孤独な巡礼', '正在播放 · 孤独な巡礼');
+    } catch {
+      syncPlaybackState();
+      showStatus('Tap Saber once more to play', '再点一次 Saber 开始播放', true);
+    }
+  };
+  const handlePress = async () => {
+    const pressLevel = unlocked ? clicksToUnlock : Math.min(clicksToUnlock, presses + 1);
+    trigger.dataset.themeStage = String(pressLevel);
+    window.clearTimeout(pressTimer);
+    trigger.classList.remove('is-pressed');
+    void trigger.offsetWidth;
+    trigger.classList.add('is-pressed');
+    pressTimer = window.setTimeout(() => trigger.classList.remove('is-pressed'), pressFeedbackDurations[pressLevel]);
+
+    if (!unlocked) {
+      presses += 1;
+      trigger.dataset.pressCount = String(presses);
+      syncPlaybackState();
+      if (presses < clicksToUnlock) return;
+
+      unlocked = true;
+      trigger.dataset.unlocked = 'true';
+      await playTheme();
+      return;
+    }
+
+    if (audio.paused) {
+      await playTheme();
+      return;
+    }
+    audio.pause();
+    syncPlaybackState();
+    showStatus('Theme paused · tap Saber to continue', '主题曲已暂停 · 点击 Saber 继续');
+  };
+  const handleThemeVisibility = () => {
+    if (document.hidden || document.body.dataset.activeChapter !== 'home') pauseTheme();
+  };
+  const handleThemeEnded = () => {
+    syncPlaybackState();
+    showStatus('The melody has faded · tap Saber to replay', '旋律已落幕 · 点击 Saber 再次播放');
+  };
+
+  trigger.addEventListener('click', handlePress);
+  audio.addEventListener('ended', handleThemeEnded);
+  document.addEventListener('visibilitychange', handleThemeVisibility);
+  window.addEventListener('pagehide', pauseTheme);
+  window.addEventListener('resize', scheduleBoundsSync, { passive: true });
+  new MutationObserver(handleThemeVisibility).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['data-active-chapter']
+  });
+  if ('ResizeObserver' in window) new ResizeObserver(scheduleBoundsSync).observe(saber);
+  syncPlaybackState();
+  scheduleBoundsSync();
+}
+
 function seededStars(count) {
   return Array.from({ length: count }, (_, index) => ({
     x: (index * 47 % 997) / 997,
@@ -399,6 +524,7 @@ if (homeScene) {
 }
 const homeSignalState = initializeHomeSignal(homeScene, reducedMotion);
 initializeTreeEasterEgg(reducedMotion);
+initializeSaberThemeEasterEgg();
 startHomeSceneAnimation(reducedMotion);
 initializeScrollMotion(sections, reducedMotion);
 initializeContactStarlight(document.querySelector('#contact'), reducedMotion);
