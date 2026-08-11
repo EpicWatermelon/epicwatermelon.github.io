@@ -1,5 +1,6 @@
 const sceneStudio = document.querySelector('#scene-studio');
 const searchParams = new URLSearchParams(window.location.search);
+const isDayTheme = document.documentElement.dataset.sceneTheme === 'day';
 const isLocalStudioPreview = ['127.0.0.1', 'localhost', '[::1]'].includes(window.location.hostname) || window.location.protocol === 'file:';
 const isDaySceneStudio = Boolean(sceneStudio && isLocalStudioPreview && searchParams.get('studio') === 'day');
 const isSceneStudioMode = Boolean(sceneStudio && isLocalStudioPreview && (searchParams.get('studio') === '1' || searchParams.get('studio') === 'day'));
@@ -97,9 +98,17 @@ const sections = [...document.querySelectorAll('[data-chapter]')];
 const navLinks = [...document.querySelectorAll('[data-nav]')];
 const meter = document.querySelector('.scroll-meter span');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const homeWindFrameDuration = 260;
+const homeDayWindStrength = 3;
+const homeWindFrameDuration = 180;
 
-const palettes = {
+const palettes = isDayTheme ? {
+  home: { base: '#9fbea0', haze: '#7fa68b', leaf: '#355e43', star: '#355e43', accent: '#745820', gold: '#745820', blue: '#286d5b' },
+  bio: { base: '#a8c8a3', haze: '#82ad8e', leaf: '#355e43', star: '#355e43', accent: '#745820', gold: '#745820', blue: '#326d58' },
+  education: { base: '#aebf91', haze: '#8ea273', leaf: '#48613a', star: '#48613a', accent: '#647b3f', gold: '#3d2458', blue: '#23366a' },
+  ophthalmic: { base: '#98c3a6', haze: '#75a387', leaf: '#315f43', star: '#315f43', accent: '#276c50', gold: '#063b4b', blue: '#06432e' },
+  industrial: { base: '#91b8a4', haze: '#70998a', leaf: '#35594e', star: '#35594e', accent: '#30695d', gold: '#4a2d05', blue: '#0a3e4c' },
+  contact: { base: '#a5bd93', haze: '#819f79', leaf: '#3f5f37', star: '#3f5f37', accent: '#5a7040', gold: '#4a2e06', blue: '#38265e' }
+} : {
   home: { base: '#03091b', haze: '#0b1835', star: '#b7d0ff', accent: '#f3d49f', gold: '#f3d49f', blue: '#79d8ff' },
   bio: { base: '#03091b', haze: '#10254f', star: '#cfe4ff', accent: '#f3d49f', gold: '#f3d49f', blue: '#79d8ff' },
   education: { base: '#080720', haze: '#31245c', star: '#e7ddff', accent: '#d9c2ff', gold: '#dbc7ff', blue: '#9db6ff' },
@@ -112,6 +121,7 @@ let activeChapter = 'home';
 let renderedPalette = { ...palettes.home };
 let contactStarlightProgress = 0;
 let stars = [];
+let leaves = [];
 let scale = 1;
 let width = 0;
 let height = 0;
@@ -119,6 +129,22 @@ let animationFrame = 0;
 const meteorDuration = 1050;
 const meteorCycleDuration = 42000;
 const meteorSchedule = createMeteorSchedule();
+const backgroundFleetFlightDuration = 7200;
+const backgroundFleetEntryChance = .45;
+const backgroundFleetDelay = () => 24000 + Math.random() * 36000;
+const backgroundFleet = [
+  { src: 'assets/pixel/background/hyperion-background-fleet-v4.png', image: new Image(), width: 48, height: 37, startY: .08, endY: .68 },
+  { src: 'assets/pixel/background/lunar-cruiser-background-fleet-v1.png', image: new Image(), width: 52, height: 24, startY: .66, endY: .66 }
+];
+const backgroundFleetState = {
+  active: null,
+  startedAt: 0,
+  nextAppearanceAt: Infinity
+};
+
+backgroundFleet.forEach((ship) => {
+  ship.image.src = ship.src;
+});
 
 function startHomeSceneAnimation(motionPreference) {
   const frames = {
@@ -132,9 +158,13 @@ function startHomeSceneAnimation(motionPreference) {
       'assets/pixel/home/meadow-sway-v2-00.png',
       'assets/pixel/home/meadow-sway-v2-01.png',
       'assets/pixel/home/meadow-sway-v2-02.png'
-    ]
+    ],
+    'day-tree-sway': Array.from({ length: 8 }, (_, index) => `assets/pixel/home/tree-day-wind-${homeDayWindStrength === 3 ? 'v9' : 'v8'}-${String(index).padStart(2, '0')}.png`),
+    'day-meadow-sway': Array.from({ length: 8 }, (_, index) => `assets/pixel/home/meadow-day-wind-${homeDayWindStrength === 3 ? 'v7' : 'v6'}-${String(index).padStart(2, '0')}.png`)
   };
-  const animatedImages = [...document.querySelectorAll('[data-home-animation]')];
+  const visibleThemeClass = isDayTheme ? 'home-scene-day-only' : 'home-scene-night-only';
+  const animatedImages = [...document.querySelectorAll('[data-home-animation]')]
+    .filter((image) => image.closest(`.${visibleThemeClass}`));
   const saberImages = animatedImages.filter((image) => image.dataset.homeAnimation === 'saber-idle');
   const saberEyes = [...document.querySelectorAll('[data-saber-eye-layer]')];
   const layers = animatedImages.filter((image) => image.dataset.homeAnimation !== 'saber-idle').map((image) => ({ image, frames: frames[image.dataset.homeAnimation] }));
@@ -472,6 +502,31 @@ function seededStars(count) {
   }));
 }
 
+function seededLeaves(count) {
+  return Array.from({ length: count }, (_, index) => ({
+    x: (index * 71 % 997) / 997,
+    y: (index * 113 % 991) / 991,
+    depth: 1 + index % 3,
+    speed: .55 + (index % 7) * .08,
+    phase: (index % 19) / 19 * Math.PI * 2
+  }));
+}
+
+function createHomeDayLeaves(container, count = 24) {
+  if (!container || container.childElementCount) return;
+
+  for (let index = 0; index < count; index += 1) {
+    const leaf = document.createElement('span');
+    leaf.className = 'home-day-leaf';
+    leaf.style.setProperty('--leaf-x', `${(8 + (index * 37 % 86)).toFixed(1)}%`);
+    leaf.style.setProperty('--leaf-y', `${(6 + (index * 53 % 72)).toFixed(1)}%`);
+    leaf.style.setProperty('--leaf-opacity', `${(.18 + (index % 5) * .06).toFixed(2)}`);
+    leaf.style.setProperty('--leaf-duration', `${(9 + (index % 7) * 1.1).toFixed(1)}s`);
+    leaf.style.setProperty('--leaf-delay', `${(-(index * .83)).toFixed(2)}s`);
+    container.append(leaf);
+  }
+}
+
 function createMeteorSchedule() {
   return [
     { start: 1800, x: 0.89, y: 0.10, travelX: -0.32, travelY: 0.17, length: 0.12 },
@@ -491,10 +546,45 @@ function resize() {
   canvas.width = width;
   canvas.height = height;
   canvas.style.imageRendering = 'pixelated';
+  context.imageSmoothingEnabled = false;
   stars = seededStars(Math.round((width * height) / 920));
+  leaves = seededLeaves(Math.round((width * height) / 1450));
   draw(performance.now());
   homeSignalState?.syncAnchors();
   updateHomeSignal(homeSignalState);
+}
+
+function drawDayLeaves(palette, time) {
+  context.fillStyle = palette.leaf;
+
+  for (const leaf of leaves) {
+    const drift = reducedMotion.matches ? 0 : time * .000006 * leaf.speed;
+    const sway = reducedMotion.matches ? 0 : Math.sin(time * .00035 + leaf.phase) * 3;
+    const x = ((leaf.x + drift) % 1) * width + sway;
+    const y = ((leaf.y + drift * .46) % 1) * height;
+    const pulse = reducedMotion.matches ? .42 : .28 + Math.sin(time * .00042 + leaf.phase) * .09;
+    const opacity = Math.max(.14, pulse + leaf.depth * .07);
+    const pixelX = Math.round(x);
+    const pixelY = Math.round(y);
+    const orientation = (leaf.depth + Math.floor(drift * 12)) % 4;
+
+    context.globalAlpha = opacity;
+    if (orientation === 0) {
+      context.fillRect(pixelX, pixelY, 2, 1);
+      context.fillRect(pixelX + 1, pixelY - 1, 1, 1);
+    } else if (orientation === 1) {
+      context.fillRect(pixelX, pixelY, 1, 2);
+      context.fillRect(pixelX + 1, pixelY, 1, 1);
+    } else if (orientation === 2) {
+      context.fillRect(pixelX - 1, pixelY, 2, 1);
+      context.fillRect(pixelX - 1, pixelY + 1, 1, 1);
+    } else {
+      context.fillRect(pixelX, pixelY - 1, 1, 2);
+      context.fillRect(pixelX - 1, pixelY - 1, 1, 1);
+    }
+  }
+
+  context.globalAlpha = 1;
 }
 
 function drawMeteor(meteor, palette, progress) {
@@ -523,7 +613,7 @@ function drawMeteor(meteor, palette, progress) {
 }
 
 function drawMeteors(palette, time) {
-  if (reducedMotion.matches || activeChapter === 'home') return;
+  if (isDayTheme || reducedMotion.matches || activeChapter === 'home') return;
 
   const moment = time % meteorCycleDuration;
   for (const meteor of meteorSchedule) {
@@ -532,24 +622,64 @@ function drawMeteors(palette, time) {
   }
 }
 
+function resetBackgroundFleet(time) {
+  backgroundFleetState.active = null;
+  backgroundFleetState.startedAt = 0;
+  backgroundFleetState.nextAppearanceAt = Math.random() < backgroundFleetEntryChance ? time + 6000 + Math.random() * 12000 : Infinity;
+}
+
+function drawBackgroundFleet(time) {
+  if (isDayTheme || reducedMotion.matches || activeChapter === 'home') return;
+
+  if (!backgroundFleetState.active && time >= backgroundFleetState.nextAppearanceAt) {
+    backgroundFleetState.active = backgroundFleet[Math.floor(Math.random() * backgroundFleet.length)];
+    backgroundFleetState.startedAt = time;
+  }
+
+  const ship = backgroundFleetState.active;
+  if (!ship) return;
+
+  const progress = Math.min(1, (time - backgroundFleetState.startedAt) / backgroundFleetFlightDuration);
+  const eased = 1 - (1 - progress) ** 3;
+  const drawWidth = ship.width;
+  const drawHeight = ship.height;
+  const x = -drawWidth + (width + drawWidth * 2) * eased;
+  const y = Math.round((ship.startY + (ship.endY - ship.startY) * eased) * height);
+
+  if (ship.image.complete && ship.image.naturalWidth) {
+    context.globalAlpha = Math.min(progress * 3, (1 - progress) * 3, 1) * .62;
+    context.drawImage(ship.image, Math.round(x), y, drawWidth, drawHeight);
+  }
+
+  if (progress === 1) {
+    backgroundFleetState.active = null;
+    backgroundFleetState.nextAppearanceAt = time + backgroundFleetDelay();
+  }
+}
+
 function draw(time) {
   const palette = renderedPalette;
   context.fillStyle = palette.base;
   context.fillRect(0, 0, width, height);
 
-  const starfieldDim = 1 - contactStarlightProgress * .62;
-  for (const star of stars) {
-    const subtlePulse = Math.sin(time * 0.001 * star.speed + star.phase) * 0.22;
-    const brightPulse = star.twinkle ? Math.max(0, Math.sin(time * 0.0019 + star.phase)) ** 9 * 0.58 : 0;
-    const light = reducedMotion.matches ? 0.58 : 0.28 + subtlePulse + brightPulse + star.depth * 0.08;
-    const driftX = reducedMotion.matches ? star.x * width : (star.x * width + time * 0.0025 * star.speed * star.depth) % width;
-    context.globalAlpha = Math.max(0.1, light) * starfieldDim;
-    context.fillStyle = star.depth === 3 ? palette.accent : palette.star;
-    const starSize = star.twinkle && light > 0.78 ? star.size + 1 : star.size;
-    context.fillRect(Math.round(driftX), Math.round(star.y * height), starSize, starSize);
-  }
+  if (isDayTheme) {
+    drawDayLeaves(palette, time);
+  } else {
+    const starfieldDim = 1 - contactStarlightProgress * .62;
+    for (const star of stars) {
+      const subtlePulse = Math.sin(time * 0.001 * star.speed + star.phase) * 0.22;
+      const brightPulse = star.twinkle ? Math.max(0, Math.sin(time * 0.0019 + star.phase)) ** 9 * 0.58 : 0;
+      const light = reducedMotion.matches ? 0.58 : 0.28 + subtlePulse + brightPulse + star.depth * 0.08;
+      const driftX = reducedMotion.matches ? star.x * width : (star.x * width + time * 0.0025 * star.speed * star.depth) % width;
+      context.globalAlpha = Math.max(0.1, light) * starfieldDim;
+      context.fillStyle = star.depth === 3 ? palette.accent : palette.star;
+      const starSize = star.twinkle && light > 0.78 ? star.size + 1 : star.size;
+      context.fillRect(Math.round(driftX), Math.round(star.y * height), starSize, starSize);
+    }
 
-  drawMeteors(palette, time);
+    drawMeteors(palette, time);
+    drawBackgroundFleet(time);
+  }
 
   context.globalAlpha = 1;
   updateHomeSignalTrail(homeSignalState, time);
@@ -560,7 +690,9 @@ const observer = new IntersectionObserver((entries) => {
   const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
   if (!visible) return;
 
-  activeChapter = visible.target.dataset.chapter;
+  const nextChapter = visible.target.dataset.chapter;
+  if (nextChapter !== 'home' && activeChapter === 'home') resetBackgroundFleet(performance.now());
+  activeChapter = nextChapter;
   visible.target.classList.add('is-revealed');
   document.body.dataset.activeChapter = activeChapter;
   navLinks.forEach((link) => link.setAttribute('aria-current', String(link.dataset.nav === activeChapter)));
@@ -569,14 +701,20 @@ const observer = new IntersectionObserver((entries) => {
 sections.forEach((section) => observer.observe(section));
 const homeScene = document.querySelector('[data-home-scene]');
 if (homeScene) {
-  const homeCanopySparkles = homeScene.querySelector('.home-canopy-sparkles');
-  createSkyTwinkles(homeScene.querySelector('.home-sky-twinkles'), { count: 132, scale: 1.2, profile: 'hero' });
-  createCanopySparkles(homeCanopySparkles, { count: 52, scale: 1.35 });
-  applyCanopyPalette(homeCanopySparkles, 'gold');
+  if (isDayTheme) {
+    createHomeDayLeaves(homeScene.querySelector('.home-day-leaves'));
+  } else {
+    const homeCanopySparkles = homeScene.querySelector('.home-canopy-sparkles');
+    createSkyTwinkles(homeScene.querySelector('.home-sky-twinkles'), { count: 132, scale: 1.2, profile: 'hero' });
+    createCanopySparkles(homeCanopySparkles, { count: 52, scale: 1.35 });
+    applyCanopyPalette(homeCanopySparkles, 'gold');
+  }
 }
-const homeSignalState = initializeHomeSignal(homeScene, reducedMotion);
-initializeTreeEasterEgg(reducedMotion);
-initializeSaberThemeEasterEgg();
+const homeSignalState = isDayTheme ? null : initializeHomeSignal(homeScene, reducedMotion);
+if (!isDayTheme) {
+  initializeTreeEasterEgg(reducedMotion);
+  initializeSaberThemeEasterEgg();
+}
 startHomeSceneAnimation(reducedMotion);
 initializeScrollMotion(sections, reducedMotion);
 initializeContactStarlight(document.querySelector('#contact'), reducedMotion);
@@ -1044,9 +1182,6 @@ function prepareDaySceneStudio(studio) {
   studio.querySelectorAll('[data-studio-day-src]').forEach((image) => {
     image.src = image.dataset.studioDaySrc;
   });
-  studio.querySelectorAll('[data-studio-day-companion]').forEach((companion) => {
-    companion.hidden = false;
-  });
   stage.setAttribute('aria-label', 'Combined daytime environmental study');
   label.textContent = 'day scene / environment study';
   document.body.classList.add('is-day-scene-studio');
@@ -1069,9 +1204,7 @@ function initializeSceneStudio(studio) {
   const inputs = [...studio.querySelectorAll('[data-scene-control]')];
   const status = studio.querySelector('[data-scene-status]');
   const canopySparkles = studio.querySelector('.studio-canopy-sparkles');
-  const storageKey = 'zhengji-scene-studio-night-v4';
-  const dayCompanionStorageKey = 'zhengji-scene-studio-day-companion-v1';
-  const dayCompanionKeys = ['malinois-x', 'malinois-y', 'malinois-scale', 'malinois-layer', 'day-wind-strength'];
+  const storageKey = isDaySceneStudio ? 'zhengji-scene-studio-day-v3' : 'zhengji-scene-studio-night-v4';
   const sceneStudioConfig = {
     'tree-x': 22.8,
     'tree-y': 18.6,
@@ -1092,12 +1225,8 @@ function initializeSceneStudio(studio) {
     'ground-y': -5.2,
     'ground-scale': 0.65,
     'ground-layer': 5,
-    'malinois-x': 49.5,
-    'malinois-y': 71.4,
-    'malinois-scale': 1.25,
-    'malinois-layer': 4,
-    'day-wind-strength': 2,
-    'wind-frame-duration': 260
+    'day-wind-strength': 3,
+    'wind-frame-duration': 180
   };
   const properties = {
     'tree-x': '--tree-x',
@@ -1117,11 +1246,7 @@ function initializeSceneStudio(studio) {
     'ground-x': '--ground-x',
     'ground-y': '--ground-y',
     'ground-scale': '--ground-scale',
-    'ground-layer': '--ground-layer',
-    'malinois-x': '--malinois-x',
-    'malinois-y': '--malinois-y',
-    'malinois-scale': '--malinois-scale',
-    'malinois-layer': '--malinois-layer'
+    'ground-layer': '--ground-layer'
   };
 
   studio.querySelectorAll('[data-studio-src]').forEach((image) => {
@@ -1139,16 +1264,10 @@ function initializeSceneStudio(studio) {
 
   try {
     const saved = JSON.parse(window.localStorage.getItem(storageKey));
-    Object.keys(sceneStudioConfig).filter((key) => !dayCompanionKeys.includes(key)).forEach((key) => {
+    Object.keys(sceneStudioConfig).forEach((key) => {
       if (key === 'canopy-palette' && ['gold', 'ice', 'jade'].includes(saved?.[key])) sceneStudioConfig[key] = saved[key];
       if (key !== 'canopy-palette' && Number.isFinite(saved?.[key])) sceneStudioConfig[key] = saved[key];
     });
-    if (isDaySceneStudio) {
-      const dayCompanionSaved = JSON.parse(window.localStorage.getItem(dayCompanionStorageKey));
-      dayCompanionKeys.forEach((key) => {
-        if (Number.isFinite(dayCompanionSaved?.[key])) sceneStudioConfig[key] = dayCompanionSaved[key];
-      });
-    }
   } catch {
     // A private browser window can reject storage; the editor remains usable for this visit.
   }
@@ -1180,12 +1299,7 @@ function initializeSceneStudio(studio) {
 
   const saveSceneStudio = () => {
     try {
-      const sharedSceneConfig = Object.fromEntries(Object.entries(sceneStudioConfig).filter(([key]) => !dayCompanionKeys.includes(key)));
-      window.localStorage.setItem(storageKey, JSON.stringify(sharedSceneConfig));
-      if (isDaySceneStudio) {
-        const dayCompanionConfig = Object.fromEntries(dayCompanionKeys.map((key) => [key, sceneStudioConfig[key]]));
-        window.localStorage.setItem(dayCompanionStorageKey, JSON.stringify(dayCompanionConfig));
-      }
+      window.localStorage.setItem(storageKey, JSON.stringify(sceneStudioConfig));
     } catch {
       // Saving is an enhancement; rendering and copying still work without it.
     }
@@ -1223,12 +1337,8 @@ function initializeSceneStudio(studio) {
       'ground-y': -5.2,
       'ground-scale': 0.65,
       'ground-layer': 5,
-      'malinois-x': 49.5,
-      'malinois-y': 71.4,
-      'malinois-scale': 1.25,
-      'malinois-layer': 4,
-      'day-wind-strength': 2,
-      'wind-frame-duration': 260
+      'day-wind-strength': 3,
+      'wind-frame-duration': 180
     });
     renderSceneStudio();
     restartSceneStudioAnimation();
@@ -1253,14 +1363,14 @@ function initializeSceneStudio(studio) {
 function startSceneStudioAnimation(studio, config) {
   const dayFrames = {
     'tree-sway': [
-      'assets/pixel/home/tree-day-wind-v6-00.png',
-      'assets/pixel/home/tree-day-wind-v6-01.png',
-      'assets/pixel/home/tree-day-wind-v6-02.png',
-      'assets/pixel/home/tree-day-wind-v6-03.png',
-      'assets/pixel/home/tree-day-wind-v6-04.png',
-      'assets/pixel/home/tree-day-wind-v6-05.png',
-      'assets/pixel/home/tree-day-wind-v6-06.png',
-      'assets/pixel/home/tree-day-wind-v6-07.png'
+      'assets/pixel/home/tree-day-wind-v8-00.png',
+      'assets/pixel/home/tree-day-wind-v8-01.png',
+      'assets/pixel/home/tree-day-wind-v8-02.png',
+      'assets/pixel/home/tree-day-wind-v8-03.png',
+      'assets/pixel/home/tree-day-wind-v8-04.png',
+      'assets/pixel/home/tree-day-wind-v8-05.png',
+      'assets/pixel/home/tree-day-wind-v8-06.png',
+      'assets/pixel/home/tree-day-wind-v8-07.png'
     ],
     'meadow-sway': [
       'assets/pixel/home/meadow-day-wind-v6-00.png',
@@ -1275,14 +1385,14 @@ function startSceneStudioAnimation(studio, config) {
   };
   const strongDayFrames = {
     'tree-sway': [
-      'assets/pixel/home/tree-day-wind-v7-00.png',
-      'assets/pixel/home/tree-day-wind-v7-01.png',
-      'assets/pixel/home/tree-day-wind-v7-02.png',
-      'assets/pixel/home/tree-day-wind-v7-03.png',
-      'assets/pixel/home/tree-day-wind-v7-04.png',
-      'assets/pixel/home/tree-day-wind-v7-05.png',
-      'assets/pixel/home/tree-day-wind-v7-06.png',
-      'assets/pixel/home/tree-day-wind-v7-07.png'
+      'assets/pixel/home/tree-day-wind-v9-00.png',
+      'assets/pixel/home/tree-day-wind-v9-01.png',
+      'assets/pixel/home/tree-day-wind-v9-02.png',
+      'assets/pixel/home/tree-day-wind-v9-03.png',
+      'assets/pixel/home/tree-day-wind-v9-04.png',
+      'assets/pixel/home/tree-day-wind-v9-05.png',
+      'assets/pixel/home/tree-day-wind-v9-06.png',
+      'assets/pixel/home/tree-day-wind-v9-07.png'
     ],
     'meadow-sway': [
       'assets/pixel/home/meadow-day-wind-v7-00.png',
@@ -1314,11 +1424,8 @@ function startSceneStudioAnimation(studio, config) {
   const frames = isDaySceneStudio ? (dayWindStrength === 3 ? strongDayFrames : dayFrames) : nightFrames;
   const animatedImages = [...studio.querySelectorAll('[data-studio-animation]')];
   const saberImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'saber-idle');
-  const malinoisTailImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-tail');
-  const malinoisHeadImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-head');
-  const malinoisBellyImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'malinois-belly');
   const saberEyes = [...studio.querySelectorAll('[data-saber-eye-layer]')];
-  const layers = animatedImages.filter((image) => !['saber-idle', 'malinois-tail', 'malinois-head', 'malinois-belly'].includes(image.dataset.studioAnimation)).map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
+  const layers = animatedImages.filter((image) => image.dataset.studioAnimation !== 'saber-idle').map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frameIndex = 0;
   let timer = 0;
@@ -1349,76 +1456,9 @@ function startSceneStudioAnimation(studio, config) {
   };
 
   motionPreference.addEventListener('change', restart);
-  if (isDaySceneStudio) startMalinoisAnimation(malinoisTailImages, malinoisHeadImages, malinoisBellyImages, motionPreference);
-  else startSaberAnimation(saberImages, saberEyes, motionPreference, config['wind-frame-duration']);
+  startSaberAnimation(saberImages, saberEyes, motionPreference, config['wind-frame-duration']);
   restart();
   return restart;
-}
-
-function startMalinoisAnimation(tailImages, headImages, bellyImages, motionPreference) {
-  if (!tailImages.length || !headImages.length || !bellyImages.length) return;
-
-  const tailFrames = Array.from({ length: 8 }, (_, index) => `assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`);
-  const headFrames = Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`);
-  const bellyFrames = Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`);
-  const pantSequence = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-  const pantFrameDurations = [340, 150, 150, 160, 170, 180, 220, 300, 240, 300, 240, 200, 180, 160, 360];
-  const idleLoopsBeforePant = 3;
-  let tailFrameIndex = 0;
-  let idleLoops = 0;
-  let isPanting = false;
-  let tailTimer = 0;
-  let pantTimer = 0;
-
-  const setSource = (images, source) => images.forEach((image) => { image.src = source; });
-  const renderTail = () => setSource(tailImages, tailFrames[tailFrameIndex]);
-  const renderPantFrame = (index) => {
-    setSource(headImages, headFrames[index]);
-    setSource(bellyImages, bellyFrames[index]);
-  };
-  const completePant = () => {
-    isPanting = false;
-    idleLoops = 0;
-    renderPantFrame(0);
-  };
-  const playPant = (sequenceIndex = 0) => {
-    const frameIndex = pantSequence[sequenceIndex];
-    renderPantFrame(frameIndex);
-    if (motionPreference.matches || sequenceIndex === pantSequence.length - 1) {
-      if (!motionPreference.matches) pantTimer = window.setTimeout(completePant, pantFrameDurations[sequenceIndex]);
-      return;
-    }
-    pantTimer = window.setTimeout(() => playPant(sequenceIndex + 1), pantFrameDurations[sequenceIndex]);
-  };
-  const scheduleTail = () => {
-    window.clearTimeout(tailTimer);
-    if (motionPreference.matches) return;
-    tailTimer = window.setTimeout(() => {
-      tailFrameIndex = (tailFrameIndex + 1) % tailFrames.length;
-      renderTail();
-      if (tailFrameIndex === 0 && !isPanting) {
-        idleLoops += 1;
-        if (idleLoops >= idleLoopsBeforePant) {
-          isPanting = true;
-          playPant();
-        }
-      }
-      scheduleTail();
-    }, 260);
-  };
-  const restart = () => {
-    window.clearTimeout(tailTimer);
-    window.clearTimeout(pantTimer);
-    tailFrameIndex = 0;
-    idleLoops = 0;
-    isPanting = false;
-    renderTail();
-    renderPantFrame(0);
-    scheduleTail();
-  };
-
-  motionPreference.addEventListener('change', restart);
-  restart();
 }
 
 function createCanopySparkles(container, { count = 38, scale = 1 } = {}) {

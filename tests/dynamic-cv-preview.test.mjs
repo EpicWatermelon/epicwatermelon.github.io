@@ -18,6 +18,30 @@ print(count)
 `;
 
 const countOpaqueChromaPixels = (path) => Number(execFileSync('python', ['-c', opaqueChromaPixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
+const sharedLayerPixels = `
+from PIL import Image
+import sys
+layers = [Image.open(path).convert('RGBA').getchannel('A') for path in sys.argv[1:]]
+print(sum(1 for values in zip(*(layer.get_flattened_data() for layer in layers)) if sum(value > 0 for value in values) > 1))
+`;
+const countSharedLayerPixels = (paths) => Number(execFileSync('python', ['-c', sharedLayerPixels, ...paths.map((path) => fileURLToPath(file(path)))], { encoding: 'utf8' }).trim());
+const opaqueBlueTreeFringePixels = `
+from PIL import Image
+import sys
+
+image = Image.open(sys.argv[1]).convert('RGBA')
+pixels = image.load()
+count = 0
+for y in range(1, image.height - 1):
+    for x in range(1, image.width - 1):
+        red, green, blue, alpha = pixels[x, y]
+        if alpha != 255 or not (blue > red + 20 and blue > green + 10):
+            continue
+        if any(pixels[x + dx, y + dy][3] == 0 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            count += 1
+print(count)
+`;
+const countOpaqueBlueTreeFringePixels = (path) => Number(execFileSync('python', ['-c', opaqueBlueTreeFringePixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
 const malinoisBodyDriftPixels = `
 from PIL import Image, ImageChops
 import sys
@@ -136,7 +160,7 @@ test('rewards ten rapid tree presses with a slow canopy-star rain that occasiona
   assert.match(script, /const canopyDropZones = \[/);
   assert.match(script, /const saberPoint = \{/);
   assert.match(script, /const starPalette = \[/);
-  assert.match(script, /const starColorOrder = \[0, 0, 0, 0, 0, 1, 0, 2, 0, 3\];/);
+  assert.match(script, /const starColorOrder = \[0, 0, 0, 1, 0, 2, 0, 0, 1, 0\];/);
   assert.match(script, /Array\.from\(\{ length: 24 \}, \(_, index\) =>/);
   assert.match(script, /const sourceProgress = \(index \* 37 % 101\) \/ 100;/);
   assert.match(script, /const dropZone = canopyDropZones\[\(index \* 3\) % canopyDropZones\.length\];/);
@@ -156,6 +180,45 @@ test('rewards ten rapid tree presses with a slow canopy-star rain that occasiona
   assert.match(css, /@keyframes fluorescent-star-fall[\s\S]*?offset-distance:\s*100%/);
   assert.doesNotMatch(css, /\.fluorescent-rain-drop/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-fluorescent-rain \{ display:\s*none;/);
+});
+
+test('keeps every tree glint and drop batch independent over a longer fluorescent fall', () => {
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(script, /const pressDropCounts = \[1, 1, 2, 2, 3, 3, 4, 5, 7\];/);
+  assert.match(script, /const pressDropLifetime = 4200;/);
+  assert.match(script, /const createTreePressFeedback = \(stage, event\) => \{/);
+  assert.match(script, /feedback\.className = 'tree-press-feedback';/);
+  assert.match(script, /tree\.append\(feedback\);/);
+  assert.match(script, /window\.setTimeout\(\(\) => feedback\.remove\(\), 680\);/);
+  assert.match(script, /const summonPressDrops = \(stage\) => \{/);
+  assert.match(script, /const dropCount = pressDropCounts\[stage - 1\];/);
+  assert.match(script, /const dropZone = canopyDropZones\[Math\.floor\(Math\.random\(\) \* canopyDropZones\.length\)\];/);
+  assert.match(script, /const startPoint = pointInZone\(dropZone, Math\.random\(\), Math\.random\(\)\);/);
+  assert.match(script, /const stageLane = \(Math\.random\(\) - \.5\) \* \(54 \+ stage \* 4\);/);
+  assert.match(script, /const minimumFallDistance = 260 \+ stage \* 18;/);
+  assert.match(script, /star\.className = 'fluorescent-rain-star fluorescent-rain-star--press';/);
+  assert.match(script, /rain\.append\(\.\.\.stars\);/);
+  assert.match(script, /stars\.forEach\(\(star\) => star\.remove\(\)\);/);
+  assert.match(script, /tree\.dataset\.treeStage = String\(presses\);/);
+  assert.match(script, /createTreePressFeedback\(presses, event\);/);
+  assert.match(script, /summonPressDrops\(presses\);/);
+  assert.doesNotMatch(script, /rain\.replaceChildren\(\.\.\.stars\);/);
+  assert.match(css, /\.tree-press-feedback \{[^}]*position:\s*absolute;[^}]*animation:\s*tree-press-glint 680ms steps\(6, end\);/s);
+  assert.match(css, /@keyframes tree-press-glint \{[\s\S]*?scale\(var\(--tree-press-scale, 1\)\)/);
+  assert.match(css, /\.fluorescent-rain-star--press \{[^}]*width:\s*4px;[^}]*height:\s*4px;/s);
+});
+
+test('limits every tree fluorescent to warm gold and soft white', () => {
+  const script = read('assets/js/dynamic-cv.js');
+  const treeEasterEgg = script.match(/function initializeTreeEasterEgg\(motionPreference\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+
+  assert.match(treeEasterEgg, /core: '#fff8c7'/);
+  assert.match(treeEasterEgg, /core: '#fffdf2'/);
+  assert.match(treeEasterEgg, /core: '#ffe6a3'/);
+  assert.doesNotMatch(treeEasterEgg, /#c5e6ff|#82b9ff|#ffb0a2|#ee735e/);
+  assert.match(treeEasterEgg, /const color = starPalette\[\(stage \* 2 \+ index\) % starPalette\.length\];/);
 });
 
 test('provides a local-only Scene Studio for manually positioning the layered night hero', () => {
@@ -228,22 +291,22 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   for (const asset of [
     'assets/pixel/home/sky-day-v2.png',
     'assets/pixel/home/ground-foundation-day-v1.png',
-    'assets/pixel/home/tree-day-wind-v6-00.png',
-    'assets/pixel/home/tree-day-wind-v6-01.png',
-    'assets/pixel/home/tree-day-wind-v6-02.png',
-    'assets/pixel/home/tree-day-wind-v6-03.png',
-    'assets/pixel/home/tree-day-wind-v6-04.png',
-    'assets/pixel/home/tree-day-wind-v6-05.png',
-    'assets/pixel/home/tree-day-wind-v6-06.png',
-    'assets/pixel/home/tree-day-wind-v6-07.png',
-    'assets/pixel/home/tree-day-wind-v7-00.png',
-    'assets/pixel/home/tree-day-wind-v7-01.png',
-    'assets/pixel/home/tree-day-wind-v7-02.png',
-    'assets/pixel/home/tree-day-wind-v7-03.png',
-    'assets/pixel/home/tree-day-wind-v7-04.png',
-    'assets/pixel/home/tree-day-wind-v7-05.png',
-    'assets/pixel/home/tree-day-wind-v7-06.png',
-    'assets/pixel/home/tree-day-wind-v7-07.png',
+    'assets/pixel/home/tree-day-wind-v8-00.png',
+    'assets/pixel/home/tree-day-wind-v8-01.png',
+    'assets/pixel/home/tree-day-wind-v8-02.png',
+    'assets/pixel/home/tree-day-wind-v8-03.png',
+    'assets/pixel/home/tree-day-wind-v8-04.png',
+    'assets/pixel/home/tree-day-wind-v8-05.png',
+    'assets/pixel/home/tree-day-wind-v8-06.png',
+    'assets/pixel/home/tree-day-wind-v8-07.png',
+    'assets/pixel/home/tree-day-wind-v9-00.png',
+    'assets/pixel/home/tree-day-wind-v9-01.png',
+    'assets/pixel/home/tree-day-wind-v9-02.png',
+    'assets/pixel/home/tree-day-wind-v9-03.png',
+    'assets/pixel/home/tree-day-wind-v9-04.png',
+    'assets/pixel/home/tree-day-wind-v9-05.png',
+    'assets/pixel/home/tree-day-wind-v9-06.png',
+    'assets/pixel/home/tree-day-wind-v9-07.png',
     'assets/pixel/home/meadow-day-wind-v6-00.png',
     'assets/pixel/home/meadow-day-wind-v6-01.png',
     'assets/pixel/home/meadow-day-wind-v6-02.png',
@@ -259,31 +322,17 @@ test('previews the combined daytime environmental study in local Scene Studio', 
     'assets/pixel/home/meadow-day-wind-v7-04.png',
     'assets/pixel/home/meadow-day-wind-v7-05.png',
     'assets/pixel/home/meadow-day-wind-v7-06.png',
-    'assets/pixel/home/meadow-day-wind-v7-07.png',
-    'assets/pixel/home/malinois-body-v3.png',
-    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`),
-    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`),
-    'assets/pixel/home/malinois-tail-v3-00.png',
-    'assets/pixel/home/malinois-tail-v3-01.png',
-    'assets/pixel/home/malinois-tail-v3-02.png',
-    'assets/pixel/home/malinois-tail-v3-03.png',
-    'assets/pixel/home/malinois-tail-v3-04.png',
-    'assets/pixel/home/malinois-tail-v3-05.png',
-    'assets/pixel/home/malinois-tail-v3-06.png',
-    'assets/pixel/home/malinois-tail-v3-07.png'
+    'assets/pixel/home/meadow-day-wind-v7-07.png'
   ]) {
     assert.ok(existsSync(file(asset)), `${asset} must be available to the daytime study`);
   }
 
   assert.match(html, /data-studio-day-src="assets\/pixel\/home\/sky-day-v2\.png"/);
   assert.match(html, /data-studio-day-src="assets\/pixel\/home\/ground-foundation-day-v1\.png"/);
-  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/tree-day-v1\.png"/);
-  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/malinois-body-v3\.png"/);
-  assert.match(html, /data-studio-animation="malinois-tail"/);
-  assert.match(html, /data-studio-animation="malinois-head"/);
-  assert.doesNotMatch(html, /data-studio-animation="malinois-ears"/);
-  assert.match(html, /data-studio-animation="malinois-belly"/);
+  assert.match(html, /data-studio-day-src="assets\/pixel\/home\/tree-day-v2\.png"/);
+  assert.doesNotMatch(html, /malinois/i);
   assert.match(html, /data-scene-control="day-wind-strength"/);
+  assert.match(html, /value="3" data-scene-control="day-wind-strength"/);
   assert.doesNotMatch(html, /bird-day-v1|studio-day-bird/);
   assert.match(script, /searchParams\.get\('studio'\) === 'day'/);
   assert.match(script, /function prepareDaySceneStudio/);
@@ -291,61 +340,84 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   assert.match(script, /const dayFrames = \{/);
   assert.match(script, /const dayFrameDurations = \[/);
   assert.match(script, /const strongDayFrames = \{/);
-  assert.match(script, /function startMalinoisAnimation/);
-  assert.match(script, /const tailFrames/);
-  assert.match(script, /const headFrames/);
-  assert.match(script, /const bellyFrames/);
-  assert.match(script, /tree-day-wind-v6-07\.png/);
-  assert.match(script, /tree-day-wind-v7-07\.png/);
+  assert.doesNotMatch(script, /malinois/i);
+  assert.match(script, /tree-day-wind-v8-07\.png/);
+  assert.match(script, /tree-day-wind-v9-07\.png/);
   assert.match(script, /meadow-day-wind-v6-07\.png/);
   assert.match(script, /meadow-day-wind-v7-07\.png/);
-  assert.match(script, /malinois-tail-v3-\$\{String\(index\)\.padStart/);
   assert.match(script, /const frames = isDaySceneStudio \? \(dayWindStrength === 3 \? strongDayFrames : dayFrames\) : nightFrames;/);
+  assert.match(script, /'day-wind-strength': 3,/);
+  assert.match(script, /'wind-frame-duration': 180/);
   assert.match(css, /body\.is-day-scene-studio \.studio-saber \{ display:\s*none;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-wind \{ display:\s*grid;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-layer-ground-foundation \{ display:\s*block;/);
   assert.doesNotMatch(css, /studio-day-ground-base/);
+  assert.doesNotMatch(css, /malinois/i);
   assert.match(css, /body\.is-day-scene-studio \.studio-layer-sky \{ filter: brightness\(\.68\) saturate\(\.72\); \}/);
 });
 
-test('keeps the daytime Malinois body fixed while its separate tail layer idles', () => {
-  assert.ok(existsSync(file('assets/pixel/home/malinois-body-v3.png')), 'the body layer must exist');
-  for (let index = 0; index < 8; index += 1) {
-    const asset = `assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`;
-    assert.ok(existsSync(file(asset)), `${asset} must exist`);
+test('keeps every animated daytime tree frame free of opaque blue background residue at its transparent edge', () => {
+  assert.equal(countOpaqueBlueTreeFringePixels('assets/pixel/home/tree-day-v2.png'), 0, 'the static day tree must not expose a blue fringe when enlarged');
+  for (const variant of ['v8', 'v9']) {
+    for (let index = 0; index < 8; index += 1) {
+      const asset = `assets/pixel/home/tree-day-wind-${variant}-${String(index).padStart(2, '0')}.png`;
+      assert.equal(countOpaqueBlueTreeFringePixels(asset), 0, `${asset} must not expose a blue fringe when enlarged`);
+    }
   }
-  assert.ok(countMalinoisTailSwingPixels() >= 28, 'the tail tip should visibly sweep through the idle loop');
 });
 
-test('gives the daytime Malinois fifteen generated panting head poses and linked belly breathing', () => {
+test('sways the daytime tree as one pixel-clean layer without replacement-frame seams', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+
+  assert.match(html, /<div class="home-scene-tree-wrap home-scene-day-only">\s*<img class="home-scene-layer home-scene-tree home-scene-tree-day" src="assets\/pixel\/home\/tree-day-v2\.png" alt="" \/>\s*<\/div>/s);
+  assert.doesNotMatch(html, /home-scene-tree-day-base/);
+  assert.doesNotMatch(html, /home-scene-tree-day"[^>]*data-home-animation="day-tree-sway"/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-tree-day \{[^}]*animation:\s*home-day-tree-sway 1440ms steps\(1, end\) infinite;[^}]*transform-origin:\s*center bottom;/s);
+  assert.match(css, /@keyframes home-day-tree-sway \{[\s\S]*?33% \{ transform: translateX\(3px\); \}[\s\S]*?66% \{ transform: translateX\(1px\); \}/);
+});
+
+test('parks Malinois art assets without exposing them in the site or Scene Studio', () => {
+  const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
-  for (let index = 0; index < 15; index += 1) {
-    assert.ok(existsSync(file(`assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`)), 'every generated panting head frame must exist');
-    assert.ok(existsSync(file(`assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`)), 'every breathing-belly frame must exist');
-  }
-  assert.ok(countMalinoisTonguePixels('assets/pixel/home/malinois-head-v5-00.png') <= 4, 'the pant loop should begin closed');
-  assert.ok(countMalinoisTonguePixels('assets/pixel/home/malinois-head-v5-07.png') >= 28, 'the middle pant frame should show a clear pink tongue');
-  assert.match(script, /const pantSequence = \[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14\];/, 'the open-mouth frames must linger in a visible cooling rhythm before recovering');
+  const css = read('assets/css/dynamic-cv.css');
+
+  assert.ok(existsSync(file('assets/pixel/home/malinois-base-v2.png')));
+  assert.doesNotMatch(html, /malinois/i);
+  assert.doesNotMatch(script, /malinois/i);
+  assert.doesNotMatch(css, /malinois/i);
 });
 
-test('lets Scene Studio switch between day and night while tuning the daytime Malinois separately', () => {
+test('ships a local cut controller for tuning the Malinois head mask before rebuilding frames', () => {
+  const cutTool = read('tools/build_malinois_head_frames.py');
+
+  for (const flag of ['--left', '--top', '--right', '--bottom', '--preview', '--write']) {
+    assert.match(cutTool, new RegExp(flag.replaceAll('-', '\\-')));
+  }
+  assert.match(cutTool, /malinois-head-pant-v8-\{index:02d\}\.png/);
+  assert.match(cutTool, /malinois-head-pant-v8-composite-sheet\.png/);
+  assert.match(cutTool, /malinois-head-pant-v8-alpha\.png/);
+});
+
+test('ships a rig builder that removes shared head and tail pixels from the daytime Malinois base', () => {
+  const rigTool = read('tools/build_malinois_rig.py');
+
+  assert.match(rigTool, /malinois-base-v2\.png/);
+  assert.match(rigTool, /malinois-head-pant-v9-\{index:02d\}\.png/);
+  assert.match(rigTool, /TAIL_FRAME_PATTERN/);
+  assert.match(rigTool, /MOUTH_BOX/);
+});
+
+test('lets Scene Studio switch between day and night without a companion control group', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
   assert.match(html, /data-scene-mode="night"/);
   assert.match(html, /data-scene-mode="day"/);
-  assert.match(html, /data-scene-control="malinois-x"/);
-  assert.match(html, /data-scene-control="malinois-y"/);
-  assert.match(html, /data-scene-control="malinois-scale"/);
-  assert.match(html, /data-scene-control="malinois-layer"/);
-  assert.match(html, /value="49\.5" data-scene-control="malinois-x"/);
-  assert.match(html, /value="71\.4" data-scene-control="malinois-y"/);
-  assert.match(html, /value="1\.25" data-scene-control="malinois-scale"/);
-  assert.match(css, /\.studio-day-malinois \{[^}]*z-index:\s*var\(--malinois-layer\);/s);
-  assert.match(css, /\.studio-day-malinois \{[^}]*transform:\s*scale\(var\(--malinois-scale\)\);/s);
-  assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-companion \{ display:\s*grid;/);
-  assert.match(script, /const dayCompanionStorageKey = 'zhengji-scene-studio-day-companion-v1';/);
+  assert.doesNotMatch(html, /malinois/i);
+  assert.doesNotMatch(css, /malinois/i);
+  assert.doesNotMatch(script, /malinois/i);
   assert.match(script, /function initializeSceneStudioModeSwitch\(studio\)/);
   assert.match(script, /searchParams\.set\('studio', mode === 'day' \? 'day' : '1'\);/);
 });
@@ -355,13 +427,13 @@ test('opens Scene Studio from a local file preview with clear depth controls', (
   const script = read('assets/js/dynamic-cv.js');
 
   assert.match(script, /const isLocalStudioPreview = .*window\.location\.protocol === 'file:'/);
-  assert.equal((html.match(/Depth \/ layer <input/g) ?? []).length, 5);
-  for (const control of ['tree-layer', 'saber-layer', 'malinois-layer', 'foundation-layer', 'ground-layer']) {
+  assert.equal((html.match(/Depth \/ layer <input/g) ?? []).length, 4);
+  for (const control of ['tree-layer', 'saber-layer', 'foundation-layer', 'ground-layer']) {
     assert.match(html, new RegExp(`data-scene-control="${control}"`));
   }
 });
 
-test('lets the local Scene Studio tune the night-wind animation speed', () => {
+test('uses the approved 180ms wind pace in the Scene Studio', () => {
   const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
 
@@ -377,11 +449,11 @@ test('lets the local Scene Studio tune the night-wind animation speed', () => {
     assert.ok(existsSync(file(asset)), `${asset} must be available for the local night-wind preview`);
   }
 
-  assert.match(html, /min="180" max="900" step="20" value="260" data-scene-control="wind-frame-duration"/);
+  assert.match(html, /min="180" max="900" step="20" value="180" data-scene-control="wind-frame-duration"/);
   assert.match(html, /data-studio-animation="tree-sway"/);
   assert.match(html, /data-studio-animation="meadow-sway"/);
   assert.match(script, /function startSceneStudioAnimation/);
-  assert.match(script, /'wind-frame-duration': 260/);
+  assert.match(script, /'wind-frame-duration': 180/);
 });
 
 test('animates the Saber idle sequence in both night-scene previews', () => {
@@ -429,11 +501,110 @@ test('scales the approved night scene as one responsive composition on the publi
   assert.match(html, /data-home-animation="tree-sway"/);
   assert.match(html, /data-home-animation="meadow-sway"/);
   assert.match(css, /\.home-scene-rig \{[^}]*aspect-ratio:\s*1672\s*\/\s*940;[^}]*--tree-x:\s*22\.8%;[^}]*--tree-y:\s*18\.6%;[^}]*--saber-x:\s*62\.1%;[^}]*--ground-x:\s*9\.3%;/s);
-  assert.match(css, /\.home-scene-rig \{[^}]*--foundation-y:\s*4\.8%;[^}]*--foundation-width:\s*1\.02;[^}]*--wind-frame-duration:\s*260ms;/s);
+  assert.match(css, /\.home-scene-rig \{[^}]*--foundation-y:\s*4\.8%;[^}]*--foundation-width:\s*1\.02;[^}]*--wind-frame-duration:\s*180ms;/s);
   assert.match(css, /\.home-scene-rig \{[^}]*--home-focus-shift:[^;]+;[^}]*width:\s*max\(100%, calc\(100svh \* 1672 \/ 940\)\);/s);
   assert.match(css, /@media \(max-width: 720px\) \{[\s\S]*?\.home-scene-rig \{[^}]*top:\s*50%;[^}]*bottom:\s*auto;/);
   assert.match(script, /function startHomeSceneAnimation/);
-  assert.match(script, /const homeWindFrameDuration = 260;/);
+  assert.match(script, /const homeWindFrameDuration = 180;/);
+  assert.match(script, /const homeDayWindStrength = 3;/);
+  assert.match(script, /tree-day-wind-\$\{homeDayWindStrength === 3 \? 'v9' : 'v8'\}-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
+  assert.match(script, /meadow-day-wind-\$\{homeDayWindStrength === 3 \? 'v7' : 'v6'\}-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
+});
+
+test('switches the public portfolio between day and night from local time with explicit preview overrides', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /<html[^>]*data-scene-theme="night"/);
+  assert.match(html, /new URLSearchParams\(window\.location\.search\)\.get\('theme'\)/);
+  assert.match(html, /hour >= 7 && hour < 18 \? 'day' : 'night'/);
+  assert.match(script, /const isDayTheme = document\.documentElement\.dataset\.sceneTheme === 'day';/);
+  assert.match(css, /html\[data-scene-theme="day"\] \{[^}]*color-scheme:\s*light;[^}]*--ink:\s*#163a2b;[^}]*--muted:\s*#2c4938;[^}]*--panel:\s*rgb\(205 225 194 \/ 82%\);/s);
+  assert.match(css, /html\[data-scene-theme="day"\] body \{[^}]*background:\s*#9fbea0;/s);
+  assert.match(script, /bio:\s*\{\s*base:\s*'#a8c8a3',\s*haze:\s*'#82ad8e'/);
+  assert.match(script, /contact:\s*\{\s*base:\s*'#a5bd93',\s*haze:\s*'#819f79'/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.education-panel \{[^}]*background:\s*linear-gradient\(135deg, rgb\(205 224 191 \/ 88%\), rgb\(174 203 164 \/ 78%\)\);/s);
+  assert.match(css, /html\[data-scene-theme="day"\] \.chapter-nav \{ color:\s*rgb\(18 53 36 \/ 82%\); \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.generated-by \{ color:\s*rgb\(27 57 38 \/ 78%\); \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav,[\s\S]*?color:\s*rgb\(242 247 244 \/ 72%\);/);
+});
+
+test('publishes the prepared daytime scene without a companion runtime', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  for (const asset of [
+    'assets/pixel/home/sky-day-v2.png',
+    'assets/pixel/home/ground-foundation-day-v1.png',
+    'assets/pixel/home/tree-day-v2.png',
+    'assets/pixel/home/meadow-day-wind-v6-00.png'
+  ]) {
+    assert.ok(existsSync(file(asset)), `${asset} must be available to the public daytime scene`);
+    assert.match(html, new RegExp(asset.replaceAll('/', '\\/').replaceAll('.', '\\.')));
+  }
+
+  assert.doesNotMatch(html, /malinois/i);
+  assert.match(css, /\.home-scene-day-only \{ display:\s*none; \}/);
+  assert.match(css, /html\[data-scene-theme="night"\] \.home-scene-day-only \{ display:\s*none; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-night-only \{ display:\s*none; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-day-only \{ display:\s*block; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-tree-easter-egg,[\s\S]*?\.home-saber-theme-trigger,[\s\S]*?display:\s*none;/);
+  assert.match(script, /if \(!isDayTheme\) \{\s*initializeTreeEasterEgg\(reducedMotion\);\s*initializeSaberThemeEasterEgg\(\);/s);
+  assert.match(script, /'day-tree-sway':\s*Array\.from\(\{ length: 8 \}/);
+  assert.match(script, /'day-meadow-sway':\s*Array\.from\(\{ length: 8 \}/);
+  assert.doesNotMatch(script, /malinois/i);
+  assert.doesNotMatch(css, /html\[data-scene-theme="day"\] \.home-scene-tree-wrap\.home-scene-day-only \{[^}]*transform:/);
+  assert.doesNotMatch(css, /malinois/i);
+});
+
+test('keeps daytime and nighttime scene layers registered to the same medium-screen coordinates', () => {
+  const css = read('assets/css/dynamic-cv.css');
+
+  assert.doesNotMatch(css, /@media \(min-width:\s*721px\) and \(max-aspect-ratio:\s*4\/3\) \{[\s\S]*?html\[data-scene-theme="day"\] \.home-scene-tree-wrap\.home-scene-day-only \{[^}]*transform:/);
+  assert.match(css, /\.home-scene-tree-wrap \{[^}]*transform:\s*translate\(var\(--tree-x\), var\(--tree-y\)\) scale\(var\(--tree-scale\)\);/s);
+});
+
+test('replaces the daytime starfield with one-colour pixel leaves', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /class="home-day-leaves home-scene-day-only"/);
+  assert.match(script, /function createHomeDayLeaves\(container, count = 24\)/);
+  assert.match(script, /createHomeDayLeaves\(homeScene\.querySelector\('\.home-day-leaves'\)\);/);
+  assert.match(script, /function seededLeaves\(count\)/);
+  assert.match(script, /function drawDayLeaves\(palette, time\)/);
+  assert.match(script, /context\.fillStyle = palette\.leaf;/);
+  assert.doesNotMatch(script, /size:\s*index % 11 === 0 \? 2 : 1/);
+  assert.doesNotMatch(script, /size \* 3/);
+  assert.match(script, /const orientation = \(leaf\.depth \+ Math\.floor\(drift \* 12\)\) % 4;/);
+  assert.match(css, /\.home-day-leaf \{[^}]*width:\s*2px;[^}]*height:\s*1px;[^}]*box-shadow:\s*1px -1px 0/s);
+  assert.match(script, /const drift = reducedMotion\.matches \? 0 :/);
+  assert.match(script, /if \(isDayTheme\) \{\s*drawDayLeaves\(palette, time\);\s*\} else \{/s);
+  assert.match(script, /if \(isDayTheme \|\| reducedMotion\.matches \|\| activeChapter === 'home'\) return;/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-sky-twinkles,[\s\S]*?\.home-canopy-sparkles \{ display:\s*none; \}/);
+});
+
+test('uses dark chapter accents for legible daytime titles and project labels', () => {
+  const script = read('assets/js/dynamic-cv.js');
+  const css = read('assets/css/dynamic-cv.css');
+
+  assert.match(css, /html\[data-scene-theme="night"\] body\[data-active-chapter="ophthalmic"\] \{ --gold: #b7e9ff; --blue: #7cf8df; \}/);
+  assert.doesNotMatch(css, /(?:^|\n)body\[data-active-chapter="ophthalmic"\] \{ --gold:/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="education"\] \{ --gold: #3d2458; --blue: #23366a; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="ophthalmic"\] \{ --gold: #063b4b; --blue: #06432e; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="industrial"\] \{ --gold: #4a2d05; --blue: #0a3e4c; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="contact"\] \{ --gold: #4a2e06; --blue: #38265e; \}/);
+  assert.doesNotMatch(css, /--day-text-accent/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.chapter-ophthalmic \.project-case-card,[\s\S]*?html\[data-scene-theme="day"\] \.chapter-industrial \.project-case-card \{ --case-accent:\s*var\(--blue\); \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.project-case-action \{ color:\s*var\(--blue\); \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.background-index-number \{ color:\s*var\(--blue\); \}/);
+  assert.match(script, /education: \{ base: '#aebf91',[\s\S]*?gold: '#3d2458', blue: '#23366a'/);
+  assert.match(script, /ophthalmic: \{ base: '#98c3a6',[\s\S]*?gold: '#063b4b', blue: '#06432e'/);
+  assert.match(script, /industrial: \{ base: '#91b8a4',[\s\S]*?gold: '#4a2d05', blue: '#0a3e4c'/);
+  assert.match(script, /contact: \{ base: '#a5bd93',[\s\S]*?gold: '#4a2e06', blue: '#38265e'/);
 });
 
 test('brings the night-sky twinkles and canopy sparkles into the deployed homepage', () => {
@@ -441,7 +612,7 @@ test('brings the night-sky twinkles and canopy sparkles into the deployed homepa
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  assert.match(html, /class="home-sky-twinkles"/);
+  assert.match(html, /class="home-sky-twinkles home-scene-night-only"/);
   assert.match(html, /class="home-canopy-sparkles"/);
   assert.match(css, /\.home-sky-twinkles/);
   assert.match(css, /\.home-canopy-sparkles/);
@@ -475,8 +646,31 @@ test('launches one meteor every five to ten seconds after the home chapter', () 
 
   assert.equal(starts.length, 6);
   assert.ok(intervals.every((interval) => interval >= 5000 && interval <= 10000));
-  assert.match(script, /if \(reducedMotion\.matches \|\| activeChapter === 'home'\) return;/);
+  assert.match(script, /if \(isDayTheme \|\| reducedMotion\.matches \|\| activeChapter === 'home'\) return;/);
   assert.match(script, /const moment = time % meteorCycleDuration;/);
+});
+
+test('sends the Lunar cruiser straight across and the Hyperion down through the Background night sky', () => {
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.ok(existsSync(file('assets/pixel/background/hyperion-background-fleet-v4.png')));
+  assert.ok(existsSync(file('assets/pixel/background/lunar-cruiser-background-fleet-v1.png')));
+  assert.match(script, /const backgroundFleet = \[/);
+  assert.match(script, /src: 'assets\/pixel\/background\/hyperion-background-fleet-v4\.png', image: new Image\(\), width: 48, height: 37, startY: \.08, endY: \.68/);
+  assert.match(script, /src: 'assets\/pixel\/background\/lunar-cruiser-background-fleet-v1\.png', image: new Image\(\), width: 52, height: 24, startY: \.66, endY: \.66/);
+  assert.match(script, /function drawBackgroundFleet\(time\) \{/);
+  assert.match(script, /if \(isDayTheme \|\| reducedMotion\.matches \|\| activeChapter === 'home'\) return;/);
+  assert.match(script, /const backgroundFleetEntryChance = \.45;/);
+  assert.match(script, /const backgroundFleetDelay = \(\) => 24000 \+ Math\.random\(\) \* 36000;/);
+  assert.match(script, /backgroundFleetState\.nextAppearanceAt = Math\.random\(\) < backgroundFleetEntryChance \? time \+ 6000 \+ Math\.random\(\) \* 12000 : Infinity;/);
+  assert.match(script, /const progress = Math\.min\(1, \(time - backgroundFleetState\.startedAt\) \/ backgroundFleetFlightDuration\);/);
+  assert.match(script, /const eased = 1 - \(1 - progress\) \*\* 3;/);
+  assert.match(script, /const x = -drawWidth \+ \(width \+ drawWidth \* 2\) \* eased;/);
+  assert.match(script, /const y = Math\.round\(\(ship\.startY \+ \(ship\.endY - ship\.startY\) \* eased\) \* height\);/);
+  assert.match(script, /context\.imageSmoothingEnabled = false;/);
+  assert.match(script, /context\.drawImage\(ship\.image, Math\.round\(x\), y, drawWidth, drawHeight\);/);
+  assert.match(script, /drawBackgroundFleet\(time\);/);
+  assert.match(script, /if \(nextChapter !== 'home' && activeChapter === 'home'\) resetBackgroundFleet\(performance\.now\(\)\);/);
 });
 
 test('keeps the Bio background free of the detached horizon ornament', () => {
@@ -586,10 +780,7 @@ test('promotes the approved 01 scroll motion into the main portfolio without lab
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
-  const packageJson = JSON.parse(read('package.json'));
-
-  assert.equal(packageJson.version, '0.1.74');
-  assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight">/);
+  assert.match(html, /<html lang="en" data-motion-variant="scroll-starlight" data-scene-theme="night">/);
   assert.match(html, /<body data-active-chapter="home" data-scroll-motion="enabled">/);
   assert.doesNotMatch(html, /Motion Lab|motion-lab-badge/);
 
@@ -732,14 +923,16 @@ test('closes with a specific contact invitation for imaging collaboration', () =
   assert.match(css, /\.contact-panel h2 \{[^}]*margin-bottom:\s*24px;[^}]*font-size:\s*clamp\(4rem, 9vw, 9\.6rem\);/s);
 });
 
-test('unlocks the Chinese contact-title easter egg on its fifth click', () => {
+test('unlocks the contact-title easter egg on its sixth click', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
   const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
 
   assert.match(html, /id="contact-title"[^>]*class="contact-title-easter-egg"[^>]*data-contact-easter-egg-trigger/);
-  assert.doesNotMatch(html, /data-contact-easter-egg-message/);
-  assert.match(css, /\.contact-title-easter-egg \{[^}]*cursor:\s*default;/s);
+  assert.match(html, /class="contact-easter-egg-progress"[^>]*data-contact-easter-egg-progress[^>]*data-contact-progress="0"/);
+  assert.equal((html.match(/class="contact-easter-egg-pixel"/g) ?? []).length, 5);
+  assert.match(html, /data-contact-easter-egg-status[^>]*aria-live="polite"/);
+  assert.match(css, /\.contact-title-easter-egg \{[^}]*cursor:\s*pointer;[^}]*touch-action:\s*manipulation;/s);
 
   const listeners = {};
   const trigger = {
@@ -755,13 +948,138 @@ test('unlocks the Chinese contact-title easter egg on its fifth click', () => {
   };
 
   initializeContactEasterEgg(document);
-  for (let click = 0; click < 4; click += 1) listeners.click();
+  for (let click = 0; click < 5; click += 1) listeners.click();
   assert.equal(trigger.textContent, '道阻且长 行则将至。');
   listeners.click();
   assert.equal(trigger.textContent, '蛋糕店里卖蛋糕');
   assert.equal(new Set(contactEasterEggLyrics).size, contactEasterEggLyrics.length);
   assert.equal(contactEasterEggLyrics.at(-1), '哎呀我去你不早说');
   assert.doesNotMatch(contactEasterEggLyrics.join('\n'), /我去 你怎么不早说/);
+});
+
+test('keeps the contact-title easter egg completely dormant in English', () => {
+  const css = read('assets/css/dynamic-cv.css');
+  const { initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const classes = new Set();
+  const attributes = {};
+  let titleHtml = 'Fata viam<br /><i>invenient.</i>';
+  let titleText = 'Fata viam invenient.';
+  const trigger = {
+    dataset: {},
+    offsetWidth: 800,
+    classList: {
+      add(...names) { names.forEach((name) => classes.add(name)); },
+      remove(...names) { names.forEach((name) => classes.delete(name)); }
+    },
+    get textContent() { return titleText; },
+    set textContent(value) { titleText = value; titleHtml = value; },
+    get innerHTML() { return titleHtml; },
+    set innerHTML(value) { titleHtml = value; titleText = value; },
+    setAttribute(name, value) { attributes[name] = value; },
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const progress = { dataset: { contactProgress: '0' }, classList: { add() {}, remove() {} } };
+  const status = { textContent: '' };
+  const document = {
+    documentElement: { lang: 'en' },
+    querySelector(selector) {
+      if (selector === '[data-contact-easter-egg-trigger]') return trigger;
+      if (selector === '[data-contact-easter-egg-progress]') return progress;
+      if (selector === '[data-contact-easter-egg-status]') return status;
+      return null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let click = 0; click < 6; click += 1) listeners.click();
+
+  assert.equal(trigger.textContent, 'Fata viam invenient.');
+  assert.equal(trigger.dataset.contactStage, undefined);
+  assert.equal(trigger.dataset.contactUnlocked, undefined);
+  assert.equal(trigger.dataset.contactEasterEggEnabled, 'false');
+  assert.equal(progress.dataset.contactProgress, '0');
+  assert.equal(classes.size, 0);
+  assert.equal(status.textContent, '');
+  assert.equal(attributes['aria-disabled'], 'true');
+  assert.equal(attributes.tabindex, '-1');
+  assert.match(css, /\.contact-title-easter-egg\[data-contact-easter-egg-enabled="false"\] \{[^}]*cursor:\s*default;[^}]*touch-action:\s*auto;/s);
+  assert.match(css, /\.contact-title-easter-egg\[data-contact-easter-egg-enabled="false"\] \+ \.contact-easter-egg-progress \{[^}]*visibility:\s*hidden;/s);
+
+  document.documentElement.lang = 'zh-CN';
+  listeners.click();
+  assert.equal(trigger.dataset.contactEasterEggEnabled, 'true');
+  assert.equal(trigger.dataset.contactStage, '1');
+  assert.equal(progress.dataset.contactProgress, '1');
+});
+
+test('guides the six Chinese contact-title presses with growing knock feedback and pixel progress', () => {
+  const css = read('assets/css/dynamic-cv.css');
+  const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const classes = new Set();
+  const progressClasses = new Set();
+  const attributes = {};
+  let titleHtml = 'Fata viam<br /><i>invenient.</i>';
+  let titleText = 'Fata viam invenient.';
+  const trigger = {
+    dataset: {},
+    offsetWidth: 800,
+    classList: {
+      add(...names) { names.forEach((name) => classes.add(name)); },
+      remove(...names) { names.forEach((name) => classes.delete(name)); },
+      contains(name) { return classes.has(name); }
+    },
+    get textContent() { return titleText; },
+    set textContent(value) { titleText = value; titleHtml = value; },
+    get innerHTML() { return titleHtml; },
+    set innerHTML(value) { titleHtml = value; titleText = value; },
+    setAttribute(name, value) { attributes[name] = value; },
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const progress = {
+    dataset: { contactProgress: '0' },
+    classList: {
+      add(...names) { names.forEach((name) => progressClasses.add(name)); },
+      remove(...names) { names.forEach((name) => progressClasses.delete(name)); }
+    }
+  };
+  const status = { textContent: '' };
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    querySelector(selector) {
+      if (selector === '[data-contact-easter-egg-trigger]') return trigger;
+      if (selector === '[data-contact-easter-egg-progress]') return progress;
+      if (selector === '[data-contact-easter-egg-status]') return status;
+      return null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let stage = 1; stage <= 5; stage += 1) {
+    listeners.click();
+    assert.equal(trigger.dataset.contactStage, String(stage));
+    assert.equal(progress.dataset.contactProgress, String(stage));
+    assert.equal(trigger.textContent, 'Fata viam invenient.');
+  }
+  assert.equal(classes.has('is-contact-gathering'), true);
+
+  listeners.click();
+  assert.equal(trigger.dataset.contactStage, '6');
+  assert.equal(trigger.dataset.contactUnlocked, 'true');
+  assert.equal(progress.dataset.contactProgress, '5');
+  assert.equal(progressClasses.has('is-complete'), true);
+  assert.equal(classes.has('is-contact-unlocking'), true);
+  assert.equal(attributes['aria-pressed'], 'true');
+  assert.equal(trigger.textContent, contactEasterEggLyrics[0]);
+  assert.match(status.textContent, /已解锁/);
+
+  assert.match(css, /\.contact-easter-egg-progress \{[^}]*grid-template-columns:\s*repeat\(5, 4px\);/s);
+  assert.match(css, /\.contact-title-easter-egg\[data-contact-stage="6"\] \{[^}]*--contact-knock-scale:\s*1\.06;/s);
+  assert.match(css, /\.contact-title-easter-egg\.is-contact-pressed \{[^}]*animation:\s*contact-title-knock 320ms steps\(5, end\);/s);
+  assert.match(css, /\.contact-title-easter-egg\.is-contact-unlocking \{[^}]*animation:\s*contact-title-unlock 620ms steps\(7, end\);/s);
+  assert.match(css, /\.contact-title-easter-egg\.is-word-swapping \{[^}]*animation:\s*contact-title-word-swap 240ms ease-out;/s);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.contact-title-easter-egg \{ animation:\s*none !important;/);
 });
 
 test('cycles the contact-title lyric after the easter egg is unlocked', () => {
@@ -780,8 +1098,52 @@ test('cycles the contact-title lyric after the easter egg is unlocked', () => {
   };
 
   initializeContactEasterEgg(document);
-  for (let click = 0; click < 6; click += 1) listeners.click();
+  for (let click = 0; click < 7; click += 1) listeners.click();
   assert.equal(trigger.textContent, '面包店里卖面包');
+});
+
+test('shakes the final contact lyric like an emphasized shout', () => {
+  const css = read('assets/css/dynamic-cv.css');
+  const { contactEasterEggLyrics, initializeContactEasterEgg } = require(fileURLToPath(file('assets/js/i18n.js')));
+  const listeners = {};
+  const classes = new Set();
+  const originalTitle = 'Fata viam<br /><i>invenient.</i>';
+  let titleHtml = originalTitle;
+  let titleText = 'Fata viam invenient.';
+  const trigger = {
+    dataset: {},
+    offsetWidth: 800,
+    classList: {
+      add(...names) { names.forEach((name) => classes.add(name)); },
+      remove(...names) { names.forEach((name) => classes.delete(name)); }
+    },
+    get textContent() { return titleText; },
+    set textContent(value) { titleText = value; titleHtml = value; },
+    get innerHTML() { return titleHtml; },
+    set innerHTML(value) { titleHtml = value; titleText = value; },
+    setAttribute() {},
+    addEventListener(type, listener) { listeners[type] = listener; }
+  };
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    querySelector(selector) {
+      return selector === '[data-contact-easter-egg-trigger]' ? trigger : null;
+    }
+  };
+
+  initializeContactEasterEgg(document);
+  for (let click = 0; click < contactEasterEggLyrics.length + 5; click += 1) listeners.click();
+
+  assert.equal(trigger.textContent, '哎呀我去你不早说');
+  assert.equal(classes.has('is-contact-shouting'), true);
+  assert.match(css, /\.contact-title-easter-egg\.is-contact-shouting \{[^}]*animation:\s*contact-title-shout 680ms steps\(9, end\);/s);
+  assert.match(css, /\.contact-panel h2 \{[^}]*font-size:\s*clamp\(4rem, 9vw, 9\.6rem\);/s);
+  assert.match(css, /\.contact-title-easter-egg\.is-contact-shouting \{[^}]*font-size:\s*clamp\(5\.5rem, 11\.5vw, 11rem\);[^}]*text-wrap:\s*balance;/s);
+  assert.match(css, /@keyframes contact-title-shout[\s\S]*?rotate\(-\.7deg\)[\s\S]*?rotate\(\.7deg\)/);
+
+  listeners.click();
+  assert.equal(trigger.innerHTML, originalTitle);
+  assert.equal(classes.has('is-contact-shouting'), false);
 });
 
 test('locks the contact title after restoring its slogan from the final lyric', () => {
@@ -805,7 +1167,7 @@ test('locks the contact title after restoring its slogan from the final lyric', 
   };
 
   initializeContactEasterEgg(document);
-  for (let click = 0; click < contactEasterEggLyrics.length + 5; click += 1) listeners.click();
+  for (let click = 0; click < contactEasterEggLyrics.length + 6; click += 1) listeners.click();
   assert.equal(trigger.innerHTML, originalTitle);
   listeners.click();
   assert.equal(trigger.innerHTML, originalTitle);
@@ -835,8 +1197,63 @@ test('restores the Chinese slogan when the visitor switches languages before unl
   initializeContactEasterEgg(document);
   document.documentElement.lang = 'zh-CN';
   trigger.innerHTML = chineseTitle;
-  for (let click = 0; click < contactEasterEggLyrics.length + 5; click += 1) listeners.click();
+  for (let click = 0; click < contactEasterEggLyrics.length + 6; click += 1) listeners.click();
   assert.equal(trigger.innerHTML, chineseTitle);
+});
+
+test('records the language scope of the contact easter egg in the interaction rules', () => {
+  const rulesPath = file('docs/design/INTERACTION_RULES.md');
+  assert.equal(existsSync(rulesPath), true, 'docs/design/INTERACTION_RULES.md must exist');
+  const rules = read('docs/design/INTERACTION_RULES.md');
+  const agents = read('AGENTS.md');
+
+  assert.match(rules, /05.*文字彩蛋[\s\S]*仅.*zh-CN/);
+  assert.match(rules, /英文[\s\S]*不累计点击[\s\S]*不触发动效[\s\S]*不点亮/);
+  assert.match(rules, /英文版彩蛋[\s\S]*明确确认/);
+  assert.match(agents, /docs\/design\/INTERACTION_RULES\.md/);
+});
+
+test('organizes documentation into indexed rules and versioned change records', () => {
+  for (const path of [
+    'docs/README.md',
+    'docs/CHANGELOG.md',
+    'docs/design/INTERACTION_RULES.md',
+    'docs/changes/0.1.65.md',
+    'docs/changes/0.1.66.md',
+    'docs/changes/0.1.67.md',
+    'docs/changes/0.1.68.md',
+    'docs/changes/0.1.69.md',
+    'docs/changes/0.1.70.md',
+    'docs/changes/0.1.71.md',
+    'docs/changes/0.1.72.md',
+    'docs/changes/0.1.73.md'
+  ]) assert.equal(existsSync(file(path)), true, `${path} must exist`);
+
+  assert.equal(existsSync(file('docs/INTERACTION_RULES.md')), false);
+  assert.equal(existsSync(file('docs/changes/2026-07-31.md')), false);
+  const index = read('docs/README.md');
+  const changelog = read('docs/CHANGELOG.md');
+  const currentChanges = read('docs/changes/0.1.73.md');
+  const homeChanges = [
+    read('docs/changes/0.1.65.md'),
+    read('docs/changes/0.1.66.md'),
+    read('docs/changes/0.1.67.md'),
+    read('docs/changes/0.1.68.md')
+  ].join('\n');
+  const agents = read('AGENTS.md');
+  const ignore = read('.gitignore');
+
+  assert.match(index, /design\/INTERACTION_RULES\.md[\s\S]*长期有效/);
+  assert.match(index, /CHANGELOG\.md[\s\S]*版本/);
+  assert.match(index, /changes\/<version>\.md[\s\S]*实现/);
+  assert.match(changelog, /0\.1\.73[\s\S]*0\.1\.72[\s\S]*0\.1\.71[\s\S]*0\.1\.70[\s\S]*0\.1\.69[\s\S]*0\.1\.68[\s\S]*0\.1\.67[\s\S]*0\.1\.66[\s\S]*0\.1\.65/);
+  assert.match(changelog, /0\.1\.65[\s\S]*5b74db9/);
+  assert.match(homeChanges, /00.*夜景[\s\S]*Saber.*音乐彩蛋[\s\S]*树木彩蛋/);
+  assert.match(currentChanges, /0\.1\.73[\s\S]*跨章节[\s\S]*点击 Saber[\s\S]*暂停/);
+  assert.match(agents, /package\.json[\s\S]*docs\/changes\/<version>\.md/);
+  assert.match(agents, /docs\/CHANGELOG\.md/);
+  assert.doesNotMatch(ignore, /^\/docs\/$/m);
+  assert.match(ignore, /^\/docs\/\*\.bundle$/m);
 });
 
 test('keeps Education as a distinct part of the Background chapter', () => {
@@ -844,7 +1261,8 @@ test('keeps Education as a distinct part of the Background chapter', () => {
   const css = read('assets/css/dynamic-cv.css');
 
   assert.match(html, /<a href="#education" data-nav="education" data-mobile-label="Background"[^>]*><span class="chapter-nav-number">02<\/span> <span class="chapter-nav-label"[^>]*>Background<\/span><\/a>/);
-  assert.match(html, /<h2 id="education-title"[^>]*>Academic<br \/><i>Background<\/i><\/h2>/);
+  assert.match(html, /<p class="eyebrow"[^>]*data-i18n="background\.eyebrow">02 \/ Path<\/p>/);
+  assert.match(html, /<h2 id="education-title"[^>]*>Profile<\/h2>/);
   assert.match(html, /<p class="path-subsection-label"[^>]*>Education<\/p>/);
   assert.doesNotMatch(html, /<em>/);
   for (const schoolMark of ['https:\/\/www\.polyu\.edu\.hk\/favicon\.ico', 'assets\/brand\/szu\.jpg', 'assets\/brand\/ysu\.png']) {
@@ -857,9 +1275,14 @@ test('keeps Education as a distinct part of the Background chapter', () => {
 test('indexes Background as three adaptive content columns', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
+  const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
 
   assert.equal((html.match(/class="background-index-card"/g) ?? []).length, 3);
-  assert.match(html, /aria-controls="path-history-dialog"[\s\S]*Education \/ Experience/);
+  assert.match(html, /aria-controls="path-history-dialog"[\s\S]*Education & Career[\s\S]*Degrees and research roles/);
+  assert.match(html, /<h2 id="path-history-title"[^>]*>Education & Career<\/h2>/);
+  assert.equal(translations['zh-CN']['background.history.title'], '教育 / 职业经历');
+  assert.equal(translations['zh-CN']['background.history.subtitle'], '学位与科研岗位');
+  assert.equal(translations['zh-CN']['history.title'], '教育 / 职业经历');
   assert.match(html, /aria-controls="path-skills-dialog"[\s\S]*Skills/);
   assert.match(html, /aria-controls="path-publications-dialog"[\s\S]*Publications/);
   assert.doesNotMatch(html.match(/<section class="chapter chapter-education"[\s\S]*?<\/section>/)?.[0] ?? '', /\+/);
@@ -874,6 +1297,7 @@ test('gives Background entry cards a larger desktop reading hierarchy', () => {
   assert.match(css, /\.background-index-number,\s*\.background-index-action \{[^}]*font:\s*500 11px\/1\.3 "DM Mono"/s);
   assert.match(css, /\.background-index-card strong \{[^}]*font:\s*500 16px\/1\.35 Manrope/);
   assert.match(css, /\.background-index-card small \{[^}]*font:\s*11px\/1\.5 "DM Mono"/);
+  assert.match(css, /@media \(min-width: 761px\) \{[\s\S]*?\.background-index-card \{[^}]*grid-template-rows:\s*auto 1fr 4\.5em auto;/s);
 });
 
 test('uses a readable supporting type scale beneath the display headings', () => {
@@ -1145,7 +1569,7 @@ test('opens separate experience, skills, and publications from the Background ch
   }
 
   const history = dialogs.get('path-history-dialog') ?? '';
-  assert.match(history, /Education \/ Experience/);
+  assert.match(history, /Education & Career/);
   assert.match(history, /class="path-subsection-label"[^>]*>Education<\/p>/);
   assert.match(history, /class="path-subsection-label"[^>]*>Work \/ research experience<\/p>/);
   assert.match(history, /Research Assistant[\s\S]*The Hong Kong Polytechnic University[\s\S]*2020\.09 — 2021\.08/);
@@ -1321,7 +1745,7 @@ test('presents the battery terminal inspection sample as an industrial case stud
   assert.match(html, /data-project-open="battery-terminal"/);
   assert.match(html, /id="battery-terminal-dialog"[^>]*role="dialog"[^>]*aria-modal="true"/);
   assert.match(html, /src="assets\/projects\/battery-terminal-defect\.jpeg"/);
-  assert.match(batteryCase, /Battery Terminal[\s\S]*Inspection Concept/);
+  assert.match(batteryCase, /Battery Cover Terminal[\s\S]*Weld Seam Defect Inspection/);
   assert.match(batteryCase, /<dt[^>]*>Company<\/dt>[\s\S]*Confidential battery manufacturer/);
   assert.match(batteryCase, /<dt[^>]*>Project date<\/dt>[\s\S]*Not publicly disclosed/);
   assert.match(batteryCase, /<dt[^>]*>Role<\/dt>[\s\S]*Machine Vision Engineer/);
@@ -1332,20 +1756,34 @@ test('presents the battery terminal inspection sample as an industrial case stud
 test('uses Ophthalmic and Industrial as scalable case indexes', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
+  const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
   const ophthalmic = html.match(/<section class="chapter chapter-ophthalmic"[\s\S]*?<\/section>/)?.[0] ?? '';
   const industrial = html.match(/<section class="chapter chapter-industrial"[\s\S]*?<\/section>/)?.[0] ?? '';
 
+  assert.match(ophthalmic, /<p class="eyebrow"[^>]*data-i18n="ophthalmic\.eyebrow">03 \/ ophthalmic imaging<\/p>/);
+  assert.match(industrial, /<p class="eyebrow"[^>]*data-i18n="industrial\.eyebrow">04 \/ industrial inspection<\/p>/);
+  assert.equal(translations['zh-CN']['ophthalmic.eyebrow'], '03 / 眼科影像');
+  assert.equal(translations['zh-CN']['industrial.eyebrow'], '04 / 工业检测');
   assert.equal((ophthalmic.match(/class="section-statement"/g) ?? []).length, 1);
   assert.equal((industrial.match(/class="section-statement"/g) ?? []).length, 1);
-  assert.equal((ophthalmic.match(/class="project-case-card"/g) ?? []).length, 2);
-  assert.equal((industrial.match(/class="project-case-card"/g) ?? []).length, 1);
+  assert.equal((ophthalmic.match(/class="project-case-card(?:\s|")/g) ?? []).length, 5);
+  assert.equal((industrial.match(/class="project-case-card(?:\s|")/g) ?? []).length, 3);
   assert.match(ophthalmic, /Corvis ST Corneal Image Super-Resolution/);
-  assert.match(ophthalmic, /Deep Learning–Based Choroidal OCT Analysis/);
-  assert.match(industrial, /Battery Terminal Inspection Concept/);
+  assert.match(ophthalmic, /OCT Choroidal Segmentation Algorithm/);
+  assert.match(ophthalmic, /OCT Choroidal Vessel Segmentation Algorithm/);
+  assert.match(ophthalmic, /OCT Choroidal Analysis Platform/);
+  assert.match(ophthalmic, /DIMS Myopia Prediction Statistical Model/);
+  assert.equal((ophthalmic.match(/project-case-card--placeholder/g) ?? []).length, 3);
+  assert.match(industrial, /Battery Cover Terminal Weld Seam Defect Inspection/);
+  assert.match(industrial, /Battery Cover Terminal Reverse-Side Adhesive Ring Defect Inspection/);
+  assert.match(industrial, /Battery Cover Safety Vent Weld Seam Defect Inspection/);
+  assert.equal((industrial.match(/project-case-card--placeholder/g) ?? []).length, 2);
+  assert.doesNotMatch(industrial, /data-project-open="battery-cover-terminal-reverse-ring"|data-project-open="battery-cover-safety-vent"/);
   assert.doesNotMatch(ophthalmic, /capability-list|chapter-note/);
   assert.doesNotMatch(industrial, /project-points|chapter-note/);
   assert.match(css, /\.project-case-list \{[^}]*display:\s*grid;[^}]*gap:\s*8px;/s);
   assert.match(css, /\.project-case-card \{[^}]*width:\s*min\(100%, 520px\);[^}]*min-height:\s*72px;/s);
+  assert.match(css, /\.project-case-card--placeholder \{[^}]*cursor:\s*default;/s);
   assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.project-case-card \{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/s);
 });
 
@@ -1354,7 +1792,7 @@ test('opens source-backed ophthalmic cases in adaptive project drawers', () => {
 
   for (const [trigger, dialog, title] of [
     ['corvis-super-resolution', 'corvis-super-resolution-dialog', 'Corvis ST Corneal Image Super-Resolution'],
-    ['choroidal-oct-analysis', 'choroidal-oct-analysis-dialog', 'Deep Learning–Based Choroidal OCT Analysis'],
+    ['choroidal-oct-analysis', 'choroidal-oct-analysis-dialog', 'OCT Choroidal Segmentation Algorithm'],
   ]) {
     assert.match(html, new RegExp(`data-project-open="${trigger}"[\\s\\S]*?aria-controls="${dialog}"`));
     assert.match(html, new RegExp(`id="${dialog}"[^>]*role="dialog"[^>]*aria-modal="true"`));
@@ -1540,8 +1978,12 @@ test('switches the document between English and Chinese and remembers the choice
   }
 
   const homeLabel = new FakeElement({ text: 'Home', attributes: { 'data-i18n': 'nav.home' } });
+  const backgroundEyebrow = new FakeElement({
+    text: '02 / Path',
+    attributes: { 'data-i18n': 'background.eyebrow' }
+  });
   const backgroundTitle = new FakeElement({
-    html: 'Academic<br /><i>Background</i>',
+    html: 'Profile',
     attributes: { 'data-i18n-html': 'background.title' }
   });
   const homeName = new FakeElement({
@@ -1556,6 +1998,7 @@ test('switches the document between English and Chinese and remembers the choice
     html: 'Fata viam<br /><i>invenient.</i>',
     attributes: {
       lang: 'la',
+      'data-contact-easter-egg-trigger': '',
       'data-i18n-html': 'contact.title',
       'data-i18n-lang': 'contact.title.lang'
     }
@@ -1583,7 +2026,7 @@ test('switches the document between English and Chinese and remembers the choice
   const status = new FakeElement({
     attributes: { 'data-language-status': '' }
   });
-  const elements = [homeLabel, backgroundTitle, homeName, bioName, contactTitle, nav, englishButton, chineseButton, status];
+  const elements = [homeLabel, backgroundEyebrow, backgroundTitle, homeName, bioName, contactTitle, nav, englishButton, chineseButton, status];
   const documentElement = { lang: 'en' };
   const body = { dataset: {} };
   const document = {
@@ -1616,11 +2059,15 @@ test('switches the document between English and Chinese and remembers the choice
   assert.equal(documentElement.lang, 'zh-CN');
   assert.equal(body.dataset.language, 'zh');
   assert.equal(homeLabel.textContent, '首页');
-  assert.equal(backgroundTitle.innerHTML, '学术<br /><i>经历</i>');
+  assert.equal(backgroundEyebrow.textContent, '02 / 轨迹');
+  assert.equal(backgroundTitle.innerHTML, '个人履历');
   assert.equal(homeName.innerHTML, 'Zhengji<br /><span>LIU</span>');
   assert.equal(bioName.innerHTML, '刘正吉 Zhengji <strong>LIU</strong>');
   assert.equal(contactTitle.innerHTML, '道阻且长<br /><i>行则将至。</i>');
   assert.equal(contactTitle.getAttribute('lang'), 'zh-CN');
+  assert.equal(contactTitle.dataset.contactEasterEggEnabled, 'true');
+  assert.equal(contactTitle.getAttribute('aria-disabled'), 'false');
+  assert.equal(contactTitle.getAttribute('tabindex'), '0');
   assert.equal(nav.getAttribute('aria-label'), '作品集章节');
   assert.equal(chineseButton.getAttribute('aria-pressed'), 'true');
   assert.equal(englishButton.getAttribute('aria-pressed'), 'false');
@@ -1629,11 +2076,15 @@ test('switches the document between English and Chinese and remembers the choice
   assert.equal(documentElement.lang, 'en');
   assert.equal(body.dataset.language, 'en');
   assert.equal(homeLabel.textContent, 'Home');
-  assert.equal(backgroundTitle.innerHTML, 'Academic<br /><i>Background</i>');
+  assert.equal(backgroundEyebrow.textContent, '02 / Path');
+  assert.equal(backgroundTitle.innerHTML, 'Profile');
   assert.equal(homeName.innerHTML, 'Zhengji<br /><span>LIU</span>');
   assert.equal(bioName.innerHTML, 'Zhengji <strong>LIU</strong>');
   assert.equal(contactTitle.innerHTML, 'Fata viam<br /><i>invenient.</i>');
   assert.equal(contactTitle.getAttribute('lang'), 'la');
+  assert.equal(contactTitle.dataset.contactEasterEggEnabled, 'false');
+  assert.equal(contactTitle.getAttribute('aria-disabled'), 'true');
+  assert.equal(contactTitle.getAttribute('tabindex'), '-1');
   assert.equal(nav.getAttribute('aria-label'), 'Portfolio chapters');
   assert.deepEqual(writes.at(-1), [storageKey, 'en']);
   assert.match(status.textContent, /English/);
@@ -1711,8 +2162,18 @@ test('keeps the Saber theme playing across chapters until the visitor pauses it'
   assert.match(script, /if \(document\.hidden\) pauseTheme\(\);/);
   assert.doesNotMatch(script, /document\.body\.dataset\.activeChapter !== 'home'/);
   assert.doesNotMatch(script, /new MutationObserver\(handleThemeVisibility\)/);
+  assert.match(script, /showStatus\('Theme paused · tap Saber to continue', '主题曲已暂停 · 点击 Saber 继续'\);/);
   assert.match(script, /audio\.addEventListener\('ended', handleThemeEnded\);/);
   assert.match(script, /trigger\.setAttribute\('aria-pressed', String\(!audio\.paused\)\);/);
+});
+
+test('bumps cache tokens when an animated companion layer is replaced', () => {
+  const html = read('index.html');
+  const packageJson = JSON.parse(read('package.json'));
+
+  assert.equal(packageJson.version, '0.1.81');
+  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.81/);
+  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.81/);
 });
 
 test('does not ship the abandoned ambient audio preview experiment', () => {
@@ -1743,17 +2204,28 @@ test('uses paper figures as visual evidence and keeps a two-column construction 
   assert.match(html, /data-i18n="progress\.current\.title"/);
   assert.match(html, /data-i18n="progress\.next\.title"/);
   assert.match(html, /data-i18n="progress\.current\.bilingual"/);
-  assert.match(html, /data-i18n="progress\.next\.timeOfDay"/);
+  assert.match(html, /data-i18n="progress\.current\.timeOfDay"/);
   assert.doesNotMatch(html, /progress\.cases/);
   assert.doesNotMatch(html, /build-status-timeline/);
   assert.match(css, /\.project-detail-visual--paper img \{[\s\S]*object-fit:\s*contain/);
+});
 
-test('records the two published easter eggs and the unfinished daytime scene in the build log', () => {
+test('records the released daytime scene in the build log and design rules', () => {
   const html = read('index.html');
   const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
 
   assert.match(html, /Two hidden interactions have joined the site:.*Saber/);
   assert.match(translations['zh-CN']['progress.current.scene'], /Saber/);
-  assert.equal(translations['zh-CN']['progress.next.timeOfDay'].includes('\u767d\u5929\u89c6\u89c9\u4ecd\u5728\u5236\u4f5c\u4e2d'), true);
+  assert.match(html, /The portfolio now follows local daytime and nighttime/);
+  assert.equal(translations['zh-CN']['progress.current.timeOfDay'].includes('\u767d\u5929'), true);
+  assert.equal(translations['zh-CN']['progress.current.timeOfDay'].includes('\u50cf\u7d20\u6811\u53f6'), true);
+  assert.ok(existsSync(file('docs/design/TIME_OF_DAY_THEME.md')));
+  assert.doesNotMatch(read('docs/todo.md'), /Implement a time-aware home-scene style/);
 });
+
+test('keeps the Chinese construction progress aligned with the published 45 percent status', () => {
+  const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
+
+  assert.equal(translations['zh-CN']['progress.label'], '\u7f51\u7ad9\u5efa\u8bbe\u8fdb\u5ea6\uff1a45%');
+  assert.equal(translations['zh-CN']['progress.text'], '\u7f51\u7ad9\u5efa\u8bbe\u4e2d <b>45%</b>');
 });

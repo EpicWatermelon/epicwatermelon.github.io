@@ -5,7 +5,7 @@ output/
 /.worktrees/
 /art-source/
 /resume/
-/docs/
+/docs/*.bundle
 /design-proposal/
 
 # Unused local asset exports
