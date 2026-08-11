@@ -368,7 +368,7 @@ test('renders Day Studio grass on a fixed-base Canvas driven by the accepted tre
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.82') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.82'), 'the wind-field helper must load before the scene runtime');
+  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.83') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.83'), 'the wind-field helper must load before the scene runtime');
   assert.match(html, /<img class="studio-layer studio-layer-ground studio-layer-ground-image"[^>]*data-studio-day-src="assets\/pixel\/home\/meadow-day-v1\.png"/);
   assert.match(html, /<canvas class="studio-layer studio-layer-ground studio-layer-ground-wind" data-studio-day-ground-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
   assert.match(html, /<label class="studio-wind-frame-control">Motion \/ frame/);
@@ -1347,7 +1347,7 @@ test('tracks every runtime scene asset for GitHub Pages deployment', () => {
     'industrial-production-line-q.png',
     '../pixel/home/sky-night-v1.png',
     '../pixel/home/ground-foundation-v6.png',
-    '../pixel/home/tree-sway-v1-00.png',
+    '../pixel/home/tree-sway-v2-00.png',
     '../pixel/home/meadow-sway-v2-00.png',
     '../pixel/home/saber-idle-chunky-v2-00.png',
     '../pixel/home/saber-eyes-v2-open.png',
@@ -1379,12 +1379,32 @@ test('does not publish unused source or preview assets', () => {
     'assets/pixel/home/sky-dusk-v2.png',
     'assets/pixel/home/tree-master-v1.png',
     'assets/pixel/home/tree-master-v2.png',
+    'assets/pixel/home/tree-day-v1.png',
+    ...Array.from({ length: 8 }, (_, index) => `assets/pixel/home/meadow-day-wind-v6-${String(index).padStart(2, '0')}.png`),
+    ...Array.from({ length: 4 }, (_, version) => Array.from({ length: 8 }, (_, index) => `assets/pixel/home/tree-day-wind-v${version + 6}-${String(index).padStart(2, '0')}.png`)).flat(),
+    ...Array.from({ length: 4 }, (_, index) => `assets/pixel/home/tree-sway-v1-${String(index).padStart(2, '0')}.png`),
+    'assets/pixel/home/malinois-body-v3.png',
+    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-belly-v2-${String(index).padStart(2, '0')}.png`),
+    ...Array.from({ length: 15 }, (_, index) => `assets/pixel/home/malinois-head-v5-${String(index).padStart(2, '0')}.png`),
+    ...Array.from({ length: 8 }, (_, index) => `assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`),
     'assets/scene/Personal website.lnk',
     'assets/scene/hero-time-tree-saber-v3.png',
   ];
 
   for (const asset of unusedAssets) {
     assert.doesNotMatch(trackedAssets, new RegExp(`^${asset.replaceAll('.', '\\.')}$`, 'm'), `${asset} must stay out of the published site`);
+  }
+
+  for (const ignoredRule of [
+    '/tmp/',
+    '/tools/',
+    '/day-scene-v2.png',
+    '/assets/pixel/home/tree-sway-v1-*.png',
+    '/assets/pixel/home/tree-day-wind-v[1-9]-*.png',
+    '/assets/pixel/home/meadow-day-wind-v[1-6]-*.png',
+    '/assets/pixel/home/malinois-*.png'
+  ]) {
+    assert.ok(read('.gitignore').split(/\r?\n/).includes(ignoredRule), `${ignoredRule} must protect local-only output`);
   }
 });
 
@@ -1406,14 +1426,25 @@ test('keeps the completed scene workspace free of retired visual experiments', (
     'tree-day-pixel-wind-v2-fixed.png',
     'tree-day-pixel-wind-v2-front.png',
     'tree-day-pixel-wind-v2-underfill.png',
-    'tree-sway-v1-00.png',
     ...Array.from({ length: 8 }, (_, index) => `tree-sway-v2-${String(index).padStart(2, '0')}.png`)
   ]);
-  const homeAssets = execFileSync('git', ['ls-files', 'assets/pixel/home'], { encoding: 'utf8' })
+  const trackedHomeAssets = execFileSync('git', ['ls-files', 'assets/pixel/home'], { encoding: 'utf8' })
     .split(/\r?\n/)
     .map((path) => path.split('/').at(-1))
     .filter((name) => /\.(?:gif|jpe?g|png|webp)$/i.test(name));
-  for (const asset of activeHomeAssets) assert.ok(homeAssets.includes(asset), `${asset} must remain in the active scene pack`);
+  const diskHomeAssets = readdirSync(file('assets/pixel/home')).filter((name) => /\.(?:gif|jpe?g|png|webp)$/i.test(name));
+  const retiredAssets = diskHomeAssets.filter((name) => !activeHomeAssets.has(name)).sort();
+
+  for (const asset of activeHomeAssets) {
+    assert.ok(trackedHomeAssets.includes(asset), `${asset} must remain tracked in the active scene pack`);
+    assert.ok(diskHomeAssets.includes(asset), `${asset} must remain available on disk`);
+  }
+  assert.equal(retiredAssets.length, 0, `retired home assets remain: ${retiredAssets.slice(0, 12).join(', ')}`);
+  assert.equal(existsSync(file('tmp')), false, 'temporary visual exports must be removed after approval');
+  assert.equal(existsSync(file('day-scene-v2.png')), false, 'the root-level Day Studio capture must be removed after approval');
+  for (const tool of ['tools/build_malinois_head_frames.py', 'tools/build_malinois_rig.py', 'tools/clean_tree_day_fringes.py']) {
+    assert.equal(existsSync(file(tool)), false, `${tool} belongs to a retired experiment`);
+  }
   assert.doesNotMatch(execFileSync('git', ['ls-files', 'tmp', 'day-scene-v2.png', 'tools'], { encoding: 'utf8' }), /\S/, 'temporary visual exports and local tooling must stay out of the published repository');
   assert.match(read('.gitignore'), /^\/tmp\/$/m, 'future temporary renders must stay out of the worktree');
 });
@@ -2214,9 +2245,9 @@ test('bumps cache tokens when an animated companion layer is replaced', () => {
   const html = read('index.html');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.82');
-  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.82/);
-  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.82/);
+  assert.equal(packageJson.version, '0.1.83');
+  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.83/);
+  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.83/);
 });
 
 test('does not ship the abandoned ambient audio preview experiment', () => {

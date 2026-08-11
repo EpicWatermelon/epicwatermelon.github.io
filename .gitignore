@@ -8,6 +8,9 @@ output/
 /docs/*.bundle
 /design-proposal/
 /tmp/
+/tools/
+/CONTEXT.md
+/day-scene-v2.png
 
 # Unused local asset exports
 /assets/brand/ysu_bw.png
@@ -33,6 +36,12 @@ output/
 /assets/pixel/home/tree-master-v1.png
 /assets/pixel/home/tree-master-v2.png
 /assets/pixel/home/tree-sway-v1-sheet-v1.png
+/assets/pixel/home/tree-sway-v1-*.png
+/assets/pixel/home/tree-day-v1.png
+/assets/pixel/home/tree-day-wind-v[1-9]-*.png
+/assets/pixel/home/tree-day-pixel-wind-v1-*.png
+/assets/pixel/home/meadow-day-wind-v[1-6]-*.png
+/assets/pixel/home/malinois-*.png
 /assets/scene/Personal website.lnk
 /assets/scene/hero-time-tree-saber-v3.png
 /assets/papers/corvis-figure-[1-4].jpg

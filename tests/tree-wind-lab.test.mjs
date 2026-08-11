@@ -253,7 +253,7 @@ test('keeps a dark inner-canopy underfill behind moving foliage', () => {
 });
 
 test('keeps night sky from opening inside the moving canopy', () => {
-  const source = 'assets/pixel/home/tree-sway-v1-00.png';
+  const source = 'assets/pixel/home/tree-sway-v2-00.png';
   const movingFrames = [1, 2, 3, 5, 6, 7].map((index) => `assets/pixel/home/tree-sway-v2-${String(index).padStart(2, '0')}.png`);
   for (const path of [source, ...movingFrames]) assert.ok(existsSync(file(path)), `${path} must exist`);
 
