@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>日间树 · 像素区位移实验</title>
+  <link rel="stylesheet" href="assets/css/tree-wind-lab.css" />
+  <link rel="preload" as="image" href="assets/pixel/home/tree-day-v2.png" />
+</head>
+<body>
+  <main class="tree-wind-lab" data-tree-wind-lab>
+    <header class="lab-header">
+      <div>
+        <p class="lab-eyebrow">Local motion study / Canvas 2D</p>
+        <h1>日间树 · 像素区位移实验</h1>
+      </div>
+      <a class="lab-back" href="index.html?theme=day">返回日间主页</a>
+    </header>
+
+    <div class="lab-layout">
+      <section class="lab-stage-card" aria-labelledby="preview-title">
+        <h2 id="preview-title" class="lab-eyebrow">实时预览</h2>
+        <div class="lab-stage">
+          <img src="assets/pixel/home/sky-day-v2.png" alt="" />
+          <canvas width="1672" height="941" data-tree-wind-canvas aria-label="日间像素树微风位移预览"></canvas>
+        </div>
+        <p class="lab-caption">绘制顺序固定为后层叶片 → 树干主枝 → 前层叶片；每帧都从原始分层重新采样。</p>
+      </section>
+
+      <aside class="lab-panel" aria-label="实验控制">
+        <section class="lab-controls">
+          <h2>风动参数</h2>
+          <label class="lab-control">
+            <span>最大摆幅</span>
+            <output data-value-for="amplitude">3px</output>
+            <input type="range" min="0" max="6" step="1" value="3" data-control="amplitude" />
+          </label>
+          <label class="lab-control">
+            <span>条带高度</span>
+            <output data-value-for="band-height">8px</output>
+            <input type="range" min="4" max="32" step="2" value="8" data-control="band-height" />
+          </label>
+          <label class="lab-control">
+            <span>循环时长</span>
+            <output data-value-for="cycle-seconds">3.6s</output>
+            <input type="range" min="2" max="7" step="0.2" value="3.6" data-control="cycle-seconds" />
+          </label>
+          <label class="lab-check">
+            <input type="checkbox" data-control="show-mask" />
+            <span>显示遮盖层级</span>
+          </label>
+          <div class="lab-depth-key" aria-label="树木绘制顺序，由后到前">
+            <p>绘制顺序 · 由后到前</p>
+            <ol>
+              <li><span class="lab-depth-swatch lab-depth-swatch--back" aria-hidden="true"></span>后层深绿叶</li>
+              <li><span class="lab-depth-swatch lab-depth-swatch--fixed" aria-hidden="true"></span>固定树干主枝</li>
+              <li><span class="lab-depth-swatch lab-depth-swatch--front" aria-hidden="true"></span>前层亮叶枝梢</li>
+            </ol>
+          </div>
+          <button class="lab-button" type="button" data-action="toggle-pause" aria-pressed="false">暂停</button>
+          <p class="lab-status" data-tree-wind-status aria-live="polite">正在载入分层素材……</p>
+        </section>
+
+        <section class="lab-reference">
+          <h2>原始静态帧</h2>
+          <img src="assets/pixel/home/tree-day-v2.png" alt="原始日间像素树参考图" />
+          <p>动画幅度归零时，后叶层、固定枝干层与前叶层会逐像素重建这一张原图。</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script type="module" src="assets/js/tree-wind-lab.js"></script>
+</body>
+</html>

@@ -1,9 +1,27 @@
 const sceneStudio = document.querySelector('#scene-studio');
 const searchParams = new URLSearchParams(window.location.search);
 const isDayTheme = document.documentElement.dataset.sceneTheme === 'day';
+const isDayAirPreview = isDayTheme && searchParams.get('qa') === 'day-air';
 const isLocalStudioPreview = ['127.0.0.1', 'localhost', '[::1]'].includes(window.location.hostname) || window.location.protocol === 'file:';
 const isDaySceneStudio = Boolean(sceneStudio && isLocalStudioPreview && searchParams.get('studio') === 'day');
 const isSceneStudioMode = Boolean(sceneStudio && isLocalStudioPreview && (searchParams.get('studio') === '1' || searchParams.get('studio') === 'day'));
+const dayWindFrameDuration = 180;
+const nightWindFrameDuration = 260;
+const sceneStudioWindFrameDuration = isDaySceneStudio ? dayWindFrameDuration : nightWindFrameDuration;
+const nightTreeWindFrames = Array.from(
+  { length: 8 },
+  (_, index) => `assets/pixel/home/tree-sway-v2-${String(index).padStart(2, '0')}.png`
+);
+const dayStudioTreeWindAssets = Object.freeze({
+  underfill: 'assets/pixel/home/tree-day-pixel-wind-v2-underfill.png',
+  back: 'assets/pixel/home/tree-day-pixel-wind-v2-back.png',
+  fixed: 'assets/pixel/home/tree-day-pixel-wind-v2-fixed.png',
+  front: 'assets/pixel/home/tree-day-pixel-wind-v2-front.png'
+});
+const dayStudioTreeWindCanopyBottom = 700;
+const dayStudioTreeWindFrameInterval = 1000 / 12;
+const dayStudioTreeWindSeamGuard = 1;
+const dayStudioGroundWindAsset = 'assets/pixel/home/meadow-day-v1.png';
 const saberIdleFrames = [
   'assets/pixel/home/saber-idle-chunky-v2-00.png',
   'assets/pixel/home/saber-idle-chunky-v2-01.png',
@@ -98,8 +116,7 @@ const sections = [...document.querySelectorAll('[data-chapter]')];
 const navLinks = [...document.querySelectorAll('[data-nav]')];
 const meter = document.querySelector('.scroll-meter span');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const homeDayWindStrength = 3;
-const homeWindFrameDuration = 180;
+const homeWindFrameDuration = isDayTheme ? dayWindFrameDuration : nightWindFrameDuration;
 
 const palettes = isDayTheme ? {
   home: { base: '#9fbea0', haze: '#7fa68b', leaf: '#355e43', star: '#355e43', accent: '#745820', gold: '#745820', blue: '#286d5b' },
@@ -129,11 +146,11 @@ let animationFrame = 0;
 const meteorDuration = 1050;
 const meteorCycleDuration = 42000;
 const meteorSchedule = createMeteorSchedule();
-const backgroundFleetFlightDuration = 7200;
+const backgroundFleetFlightDuration = 9600;
 const backgroundFleetEntryChance = .45;
 const backgroundFleetDelay = () => 24000 + Math.random() * 36000;
 const backgroundFleet = [
-  { src: 'assets/pixel/background/hyperion-background-fleet-v4.png', image: new Image(), width: 48, height: 37, startY: .08, endY: .68 },
+  { src: 'assets/pixel/background/hyperion-background-fleet-v4.png', image: new Image(), width: 48, height: 37, startY: -.16, endY: 1.04 },
   { src: 'assets/pixel/background/lunar-cruiser-background-fleet-v1.png', image: new Image(), width: 52, height: 24, startY: .66, endY: .66 }
 ];
 const backgroundFleetState = {
@@ -149,18 +166,14 @@ backgroundFleet.forEach((ship) => {
 function startHomeSceneAnimation(motionPreference) {
   const frames = {
     'tree-sway': [
-      'assets/pixel/home/tree-sway-v1-00.png',
-      'assets/pixel/home/tree-sway-v1-01.png',
-      'assets/pixel/home/tree-sway-v1-02.png',
-      'assets/pixel/home/tree-sway-v1-03.png'
+      ...nightTreeWindFrames
     ],
     'meadow-sway': [
       'assets/pixel/home/meadow-sway-v2-00.png',
       'assets/pixel/home/meadow-sway-v2-01.png',
       'assets/pixel/home/meadow-sway-v2-02.png'
     ],
-    'day-tree-sway': Array.from({ length: 8 }, (_, index) => `assets/pixel/home/tree-day-wind-${homeDayWindStrength === 3 ? 'v9' : 'v8'}-${String(index).padStart(2, '0')}.png`),
-    'day-meadow-sway': Array.from({ length: 8 }, (_, index) => `assets/pixel/home/meadow-day-wind-${homeDayWindStrength === 3 ? 'v7' : 'v6'}-${String(index).padStart(2, '0')}.png`)
+    'day-meadow-sway': Array.from({ length: 8 }, (_, index) => `assets/pixel/home/meadow-day-wind-v7-${String(index).padStart(2, '0')}.png`)
   };
   const visibleThemeClass = isDayTheme ? 'home-scene-day-only' : 'home-scene-night-only';
   const animatedImages = [...document.querySelectorAll('[data-home-animation]')]
@@ -527,6 +540,46 @@ function createHomeDayLeaves(container, count = 24) {
   }
 }
 
+function createHomeDayAir(container, motionPreference) {
+  if (!container) return;
+
+  const canopyLeaves = [
+    { x: '54%', y: '24%', dx: 'clamp(116px, 15vw, 230px)', dy: 'clamp(112px, 17vh, 198px)', duration: '8.8s', delay: '-1.4s', color: '#e4d89d' },
+    { x: '59%', y: '28%', dx: 'clamp(98px, 14vw, 206px)', dy: 'clamp(130px, 19vh, 220px)', duration: '9.6s', delay: '-4.2s', color: '#b7cf7a' },
+    { x: '66%', y: '35%', dx: 'clamp(84px, 12vw, 178px)', dy: 'clamp(104px, 16vh, 188px)', duration: '8.2s', delay: '-6.6s', color: '#f1e9c1' },
+    { x: '47%', y: '31%', dx: 'clamp(128px, 18vw, 260px)', dy: 'clamp(126px, 20vh, 232px)', duration: '10.2s', delay: '-2.8s', color: '#d6c982' },
+    { x: '72%', y: '27%', dx: 'clamp(76px, 11vw, 170px)', dy: 'clamp(118px, 18vh, 206px)', duration: '9.2s', delay: '-5.5s', color: '#d9dc9e' },
+    { x: '78%', y: '38%', dx: 'clamp(70px, 10vw, 154px)', dy: 'clamp(112px, 17vh, 198px)', duration: '8.6s', delay: '-7.8s', color: '#c6d88a' }
+  ];
+
+  const buildParticle = (className, config) => {
+    const particle = document.createElement('span');
+    particle.className = className;
+    Object.entries(config).forEach(([key, value]) => {
+      if (key === 'color') {
+        particle.style.setProperty('--air-color', value);
+      } else {
+        particle.style.setProperty(`--air-${key}`, value);
+      }
+    });
+    return particle;
+  };
+
+  const build = () => {
+    container.replaceChildren();
+    if (motionPreference.matches) return;
+    Array.from({ length: 6 }, (_, index) => canopyLeaves[index]).forEach((config) => {
+      container.append(
+        buildParticle('home-day-air-trace', config),
+        buildParticle('home-day-air-leaf', config)
+      );
+    });
+  };
+
+  motionPreference.addEventListener('change', build);
+  build();
+}
+
 function createMeteorSchedule() {
   return [
     { start: 1800, x: 0.89, y: 0.10, travelX: -0.32, travelY: 0.17, length: 0.12 },
@@ -640,14 +693,13 @@ function drawBackgroundFleet(time) {
   if (!ship) return;
 
   const progress = Math.min(1, (time - backgroundFleetState.startedAt) / backgroundFleetFlightDuration);
-  const eased = 1 - (1 - progress) ** 3;
   const drawWidth = ship.width;
   const drawHeight = ship.height;
-  const x = -drawWidth + (width + drawWidth * 2) * eased;
-  const y = Math.round((ship.startY + (ship.endY - ship.startY) * eased) * height);
+  const x = -drawWidth + (width + drawWidth * 2) * progress;
+  const y = Math.round((ship.startY + (ship.endY - ship.startY) * progress) * height);
 
   if (ship.image.complete && ship.image.naturalWidth) {
-    context.globalAlpha = Math.min(progress * 3, (1 - progress) * 3, 1) * .62;
+    context.globalAlpha = Math.min(progress * 10, (1 - progress) * 10, 1) * .62;
     context.drawImage(ship.image, Math.round(x), y, drawWidth, drawHeight);
   }
 
@@ -703,6 +755,9 @@ const homeScene = document.querySelector('[data-home-scene]');
 if (homeScene) {
   if (isDayTheme) {
     createHomeDayLeaves(homeScene.querySelector('.home-day-leaves'));
+    if (isDayTheme && isDayAirPreview) {
+      createHomeDayAir(homeScene.querySelector('.home-day-air'), reducedMotion);
+    }
   } else {
     const homeCanopySparkles = homeScene.querySelector('.home-canopy-sparkles');
     createSkyTwinkles(homeScene.querySelector('.home-sky-twinkles'), { count: 132, scale: 1.2, profile: 'hero' });
@@ -1175,6 +1230,306 @@ resize();
 updateScrollMeter();
 }
 
+function createStudioTreeBandOffsets({ height, bandHeight, maxAmplitude, cycleSeconds, elapsedSeconds, canopyBottom }) {
+  const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+  const safeHeight = Math.max(1, Math.floor(height));
+  const safeBandHeight = clamp(Math.round(bandHeight), 2, 64);
+  const safeAmplitude = clamp(Math.round(maxAmplitude), 0, 12);
+  const safeCycle = Math.max(.25, Number(cycleSeconds));
+  const safeCanopyBottom = clamp(Math.round(canopyBottom), 1, safeHeight);
+  const wrappedTime = ((Number(elapsedSeconds) % safeCycle) + safeCycle) % safeCycle;
+  const phase = wrappedTime / safeCycle * Math.PI * 2;
+  const bands = [];
+  let previousOffset = null;
+
+  for (let sourceY = 0; sourceY < safeHeight; sourceY += safeBandHeight) {
+    const sourceHeight = Math.min(safeBandHeight, safeHeight - sourceY);
+    const centreY = sourceY + sourceHeight * .5;
+    let targetOffset = 0;
+
+    if (centreY < safeCanopyBottom && safeAmplitude > 0) {
+      const heightWeight = Math.pow(1 - centreY / safeCanopyBottom, .72);
+      const spatialPhase = centreY * .035;
+      const primaryWave = Math.sin(phase);
+      const secondaryWave = Math.sin(phase * 2 + spatialPhase) - Math.sin(spatialPhase);
+      targetOffset = Math.round(safeAmplitude * heightWeight * (primaryWave * .84 + secondaryWave * .16));
+      targetOffset = clamp(targetOffset, -safeAmplitude, safeAmplitude);
+    }
+
+    const offsetX = previousOffset === null
+      ? targetOffset
+      : clamp(targetOffset, previousOffset - 1, previousOffset + 1);
+    bands.push({ sourceY, sourceHeight, offsetX });
+    previousOffset = offsetX;
+  }
+
+  return bands;
+}
+
+function createStudioTreeLayerOffsets({ layer, ...settings }) {
+  const motionScale = layer === 'back' ? .4 : 1;
+  return createStudioTreeBandOffsets({
+    ...settings,
+    bandHeight: layer === 'back' ? Number(settings.bandHeight) * 2 : settings.bandHeight,
+    maxAmplitude: Number(settings.maxAmplitude) * motionScale
+  });
+}
+
+function createStudioTreeGuardedDrawRegions(bands, imageHeight) {
+  return bands.map((band) => {
+    const sourceY = Math.max(0, band.sourceY - dayStudioTreeWindSeamGuard);
+    const sourceEnd = Math.min(imageHeight, band.sourceY + band.sourceHeight + dayStudioTreeWindSeamGuard);
+    return {
+      sourceY,
+      sourceHeight: sourceEnd - sourceY,
+      destinationY: sourceY,
+      offsetX: band.offsetX
+    };
+  });
+}
+
+function drawStudioTreeStrips(context, image, bands, alpha = 1) {
+  const imageHeight = image.naturalHeight || image.height;
+  const imageWidth = image.naturalWidth || image.width;
+  context.globalAlpha = alpha;
+  for (const region of createStudioTreeGuardedDrawRegions(bands, imageHeight)) {
+    context.drawImage(
+      image,
+      0,
+      region.sourceY,
+      imageWidth,
+      region.sourceHeight,
+      region.offsetX,
+      region.destinationY,
+      imageWidth,
+      region.sourceHeight
+    );
+  }
+  context.globalAlpha = 1;
+}
+
+function startDaySceneTreeWind(studio, config) {
+  const canvas = studio.querySelector('[data-studio-day-tree-wind]');
+  if (!canvas) return () => {};
+
+  const context = canvas.getContext('2d', { alpha: true });
+  const tree = canvas.closest('.studio-tree');
+  const pauseButton = studio.querySelector('[data-scene-action="day-tree-toggle-pause"]');
+  const status = studio.querySelector('[data-scene-status]');
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const images = {};
+  const depthTints = {};
+  let isReady = false;
+  let isPaused = false;
+  let startedAt = performance.now();
+  let lastPaintAt = -Infinity;
+  let animationFrame = 0;
+
+  const loadImage = (source) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.addEventListener('load', () => resolve(image), { once: true });
+    image.addEventListener('error', () => reject(new Error(`Unable to load ${source}`)), { once: true });
+    image.src = source;
+  });
+
+  const createDepthTint = (image, color) => {
+    const tint = document.createElement('canvas');
+    tint.width = image.naturalWidth;
+    tint.height = image.naturalHeight;
+    const tintContext = tint.getContext('2d', { alpha: true });
+    tintContext.imageSmoothingEnabled = false;
+    tintContext.drawImage(image, 0, 0);
+    tintContext.globalCompositeOperation = 'source-in';
+    tintContext.fillStyle = color;
+    tintContext.fillRect(0, 0, tint.width, tint.height);
+    tintContext.globalCompositeOperation = 'source-over';
+    return tint;
+  };
+
+  const render = (now) => {
+    if (!isReady) return;
+    const stopped = motionPreference.matches || isPaused;
+    const elapsedSeconds = stopped ? 0 : (now - startedAt) / 1000;
+    const settings = {
+      height: canvas.height,
+      bandHeight: config['day-tree-band-height'],
+      maxAmplitude: config['day-tree-amplitude'],
+      cycleSeconds: config['day-tree-cycle-seconds'],
+      elapsedSeconds,
+      canopyBottom: dayStudioTreeWindCanopyBottom
+    };
+    const backBands = createStudioTreeLayerOffsets({ ...settings, layer: 'back' });
+    const frontBands = createStudioTreeLayerOffsets({ ...settings, layer: 'front' });
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(images.underfill, 0, 0);
+    drawStudioTreeStrips(context, images.back, backBands);
+    context.drawImage(images.fixed, 0, 0);
+    drawStudioTreeStrips(context, images.front, frontBands);
+    if (config['day-tree-show-mask']) {
+      drawStudioTreeStrips(context, depthTints.back, backBands, .52);
+      context.globalAlpha = .42;
+      context.drawImage(depthTints.fixed, 0, 0);
+      context.globalAlpha = 1;
+      drawStudioTreeStrips(context, depthTints.front, frontBands, .44);
+    }
+  };
+
+  const tick = (now) => {
+    if (!motionPreference.matches && !isPaused && now - lastPaintAt >= dayStudioTreeWindFrameInterval) {
+      render(now);
+      lastPaintAt = now;
+    }
+    animationFrame = window.requestAnimationFrame(tick);
+  };
+
+  const restart = () => {
+    startedAt = performance.now();
+    lastPaintAt = -Infinity;
+    render(startedAt);
+  };
+
+  const updatePauseButton = () => {
+    if (!pauseButton) return;
+    pauseButton.textContent = isPaused ? 'Resume tree' : 'Pause tree';
+    pauseButton.setAttribute('aria-pressed', String(isPaused));
+  };
+
+  if (pauseButton) {
+    pauseButton.addEventListener('click', () => {
+      isPaused = !isPaused;
+      updatePauseButton();
+      restart();
+      if (status) status.textContent = isPaused ? 'Day tree animation paused.' : 'Day tree animation resumed.';
+    });
+  }
+
+  Promise.all(Object.entries(dayStudioTreeWindAssets).map(async ([key, source]) => {
+    images[key] = await loadImage(source);
+  })).then(() => {
+    canvas.width = images.fixed.naturalWidth;
+    canvas.height = images.fixed.naturalHeight;
+    context.imageSmoothingEnabled = false;
+    depthTints.back = createDepthTint(images.back, '#42d7ff');
+    depthTints.fixed = createDepthTint(images.fixed, '#ffad42');
+    depthTints.front = createDepthTint(images.front, '#a7ff5b');
+    isReady = true;
+    canvas.hidden = false;
+    restart();
+    tree?.classList.add('is-day-tree-wind-ready');
+    window.cancelAnimationFrame(animationFrame);
+    animationFrame = window.requestAnimationFrame(tick);
+  }).catch(() => {
+    canvas.hidden = true;
+    tree?.classList.remove('is-day-tree-wind-ready');
+  });
+
+  motionPreference.addEventListener('change', restart);
+  window.addEventListener('pagehide', () => window.cancelAnimationFrame(animationFrame), { once: true });
+  updatePauseButton();
+  return restart;
+}
+
+function startDaySceneGroundWind(studio, config) {
+  const canvas = studio.querySelector('[data-studio-day-ground-wind]');
+  const stage = studio.querySelector('[data-scene-stage]');
+  const dayGroundWind = window.dayGroundWind;
+  if (!canvas || !stage || !dayGroundWind) return () => {};
+
+  const context = canvas.getContext('2d', { alpha: true });
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const image = new Image();
+  let isReady = false;
+  let startedAt = performance.now();
+  let lastPaintAt = -Infinity;
+  let animationFrame = 0;
+
+  const render = (now) => {
+    if (!isReady) return;
+    const elapsedSeconds = motionPreference.matches ? 0 : (now - startedAt) / 1000;
+    const bands = window.dayGroundWind.createBandOffsets({
+      height: canvas.height,
+      bandHeight: config['day-tree-band-height'],
+      maxAmplitude: config['day-tree-amplitude'],
+      cycleSeconds: config['day-tree-cycle-seconds'],
+      elapsedSeconds,
+      topY: dayGroundWind.TOP_Y,
+      anchorY: dayGroundWind.ANCHOR_Y,
+      activeSpan: dayGroundWind.ACTIVE_SPAN
+    });
+    const regions = dayGroundWind.createGuardedDrawRegions(
+      bands,
+      dayGroundWind.TOP_Y,
+      dayGroundWind.ANCHOR_Y,
+      dayGroundWind.SEAM_GUARD
+    );
+    const imageWidth = image.naturalWidth;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    regions.forEach((region) => {
+      context.drawImage(
+        image,
+        0,
+        region.sourceY,
+        imageWidth,
+        region.sourceHeight,
+        region.offsetX,
+        region.destinationY,
+        imageWidth,
+        region.sourceHeight
+      );
+    });
+    context.drawImage(
+      image,
+      0,
+      dayGroundWind.ANCHOR_Y,
+      imageWidth,
+      canvas.height - dayGroundWind.ANCHOR_Y,
+      0,
+      dayGroundWind.ANCHOR_Y,
+      imageWidth,
+      canvas.height - dayGroundWind.ANCHOR_Y
+    );
+  };
+
+  const tick = (now) => {
+    if (now - lastPaintAt >= dayGroundWind.FRAME_INTERVAL) {
+      render(now);
+      lastPaintAt = now;
+    }
+    animationFrame = window.requestAnimationFrame(tick);
+  };
+
+  const restart = () => {
+    startedAt = performance.now();
+    lastPaintAt = -Infinity;
+    render(startedAt);
+  };
+
+  image.decoding = 'async';
+  image.addEventListener('load', () => {
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    context.imageSmoothingEnabled = false;
+    isReady = true;
+    canvas.hidden = false;
+    restart();
+    stage.classList.add('is-day-ground-wind-ready');
+    window.cancelAnimationFrame(animationFrame);
+    animationFrame = window.requestAnimationFrame(tick);
+  }, { once: true });
+  image.addEventListener('error', () => {
+    canvas.hidden = true;
+    stage.classList.remove('is-day-ground-wind-ready');
+  }, { once: true });
+  image.src = dayStudioGroundWindAsset;
+
+  motionPreference.addEventListener('change', restart);
+  window.addEventListener('pagehide', () => window.cancelAnimationFrame(animationFrame), { once: true });
+  return restart;
+}
+
 function prepareDaySceneStudio(studio) {
   const stage = studio.querySelector('[data-scene-stage]');
   const label = studio.querySelector('.studio-stage-label');
@@ -1204,7 +1559,7 @@ function initializeSceneStudio(studio) {
   const inputs = [...studio.querySelectorAll('[data-scene-control]')];
   const status = studio.querySelector('[data-scene-status]');
   const canopySparkles = studio.querySelector('.studio-canopy-sparkles');
-  const storageKey = isDaySceneStudio ? 'zhengji-scene-studio-day-v3' : 'zhengji-scene-studio-night-v4';
+  const storageKey = isDaySceneStudio ? 'zhengji-scene-studio-day-v4' : 'zhengji-scene-studio-night-v5';
   const sceneStudioConfig = {
     'tree-x': 22.8,
     'tree-y': 18.6,
@@ -1225,8 +1580,11 @@ function initializeSceneStudio(studio) {
     'ground-y': -5.2,
     'ground-scale': 0.65,
     'ground-layer': 5,
-    'day-wind-strength': 3,
-    'wind-frame-duration': 180
+    'day-tree-amplitude': 6,
+    'day-tree-band-height': 4,
+    'day-tree-cycle-seconds': 3,
+    'day-tree-show-mask': false,
+    'wind-frame-duration': sceneStudioWindFrameDuration
   };
   const properties = {
     'tree-x': '--tree-x',
@@ -1266,7 +1624,8 @@ function initializeSceneStudio(studio) {
     const saved = JSON.parse(window.localStorage.getItem(storageKey));
     Object.keys(sceneStudioConfig).forEach((key) => {
       if (key === 'canopy-palette' && ['gold', 'ice', 'jade'].includes(saved?.[key])) sceneStudioConfig[key] = saved[key];
-      if (key !== 'canopy-palette' && Number.isFinite(saved?.[key])) sceneStudioConfig[key] = saved[key];
+      if (typeof sceneStudioConfig[key] === 'boolean' && typeof saved?.[key] === 'boolean') sceneStudioConfig[key] = saved[key];
+      if (key !== 'canopy-palette' && typeof sceneStudioConfig[key] !== 'boolean' && Number.isFinite(saved?.[key])) sceneStudioConfig[key] = saved[key];
     });
   } catch {
     // A private browser window can reject storage; the editor remains usable for this visit.
@@ -1275,7 +1634,8 @@ function initializeSceneStudio(studio) {
   const formatValue = (key, value) => {
     if (key === 'canopy-palette') return value;
     if (key === 'wind-frame-duration') return `${Math.round(value)}ms`;
-    if (key === 'day-wind-strength') return ['Gentle', 'Breezy', 'Gusty'][Math.round(value) - 1];
+    if (key === 'day-tree-amplitude' || key === 'day-tree-band-height') return `${Math.round(value)}px`;
+    if (key === 'day-tree-cycle-seconds') return `${Number(value).toFixed(1)}s`;
     if (key.endsWith('layer')) return `z${value}`;
     if (key.endsWith('scale') || key === 'foundation-width') return `${value.toFixed(2)}×`;
     if (key === 'saber-brightness' || key === 'saber-night-light') return `${Math.round(value * 100)}%`;
@@ -1286,7 +1646,8 @@ function initializeSceneStudio(studio) {
     inputs.forEach((input) => {
       const key = input.dataset.sceneControl;
       const value = sceneStudioConfig[key];
-      input.value = String(value);
+      if (input.type === 'checkbox') input.checked = Boolean(value);
+      else input.value = String(value);
       const isUnitless = key.endsWith('layer') || key.endsWith('scale') || key === 'foundation-width' || key === 'saber-brightness' || key === 'saber-night-light';
       if (properties[key]) stage.style.setProperty(properties[key], isUnitless ? value : `${value}%`);
       const output = studio.querySelector(`[data-scene-value="${key}"]`);
@@ -1308,10 +1669,12 @@ function initializeSceneStudio(studio) {
   inputs.forEach((input) => {
     input.addEventListener('input', () => {
       const key = input.dataset.sceneControl;
-      sceneStudioConfig[key] = key === 'canopy-palette' ? input.value : Number(input.value);
+      sceneStudioConfig[key] = input.type === 'checkbox'
+        ? input.checked
+        : key === 'canopy-palette' ? input.value : Number(input.value);
       renderSceneStudio();
       saveSceneStudio();
-      if (key === 'wind-frame-duration' || key === 'day-wind-strength') restartSceneStudioAnimation();
+      if (key === 'wind-frame-duration' || key.startsWith('day-tree-')) restartSceneStudioAnimation();
       status.textContent = 'Draft saved in this browser.';
     });
   });
@@ -1337,8 +1700,11 @@ function initializeSceneStudio(studio) {
       'ground-y': -5.2,
       'ground-scale': 0.65,
       'ground-layer': 5,
-      'day-wind-strength': 3,
-      'wind-frame-duration': 180
+      'day-tree-amplitude': 6,
+      'day-tree-band-height': 4,
+      'day-tree-cycle-seconds': 3,
+      'day-tree-show-mask': false,
+      'wind-frame-duration': sceneStudioWindFrameDuration
     });
     renderSceneStudio();
     restartSceneStudioAnimation();
@@ -1361,57 +1727,9 @@ function initializeSceneStudio(studio) {
 }
 
 function startSceneStudioAnimation(studio, config) {
-  const dayFrames = {
-    'tree-sway': [
-      'assets/pixel/home/tree-day-wind-v8-00.png',
-      'assets/pixel/home/tree-day-wind-v8-01.png',
-      'assets/pixel/home/tree-day-wind-v8-02.png',
-      'assets/pixel/home/tree-day-wind-v8-03.png',
-      'assets/pixel/home/tree-day-wind-v8-04.png',
-      'assets/pixel/home/tree-day-wind-v8-05.png',
-      'assets/pixel/home/tree-day-wind-v8-06.png',
-      'assets/pixel/home/tree-day-wind-v8-07.png'
-    ],
-    'meadow-sway': [
-      'assets/pixel/home/meadow-day-wind-v6-00.png',
-      'assets/pixel/home/meadow-day-wind-v6-01.png',
-      'assets/pixel/home/meadow-day-wind-v6-02.png',
-      'assets/pixel/home/meadow-day-wind-v6-03.png',
-      'assets/pixel/home/meadow-day-wind-v6-04.png',
-      'assets/pixel/home/meadow-day-wind-v6-05.png',
-      'assets/pixel/home/meadow-day-wind-v6-06.png',
-      'assets/pixel/home/meadow-day-wind-v6-07.png'
-    ]
-  };
-  const strongDayFrames = {
-    'tree-sway': [
-      'assets/pixel/home/tree-day-wind-v9-00.png',
-      'assets/pixel/home/tree-day-wind-v9-01.png',
-      'assets/pixel/home/tree-day-wind-v9-02.png',
-      'assets/pixel/home/tree-day-wind-v9-03.png',
-      'assets/pixel/home/tree-day-wind-v9-04.png',
-      'assets/pixel/home/tree-day-wind-v9-05.png',
-      'assets/pixel/home/tree-day-wind-v9-06.png',
-      'assets/pixel/home/tree-day-wind-v9-07.png'
-    ],
-    'meadow-sway': [
-      'assets/pixel/home/meadow-day-wind-v7-00.png',
-      'assets/pixel/home/meadow-day-wind-v7-01.png',
-      'assets/pixel/home/meadow-day-wind-v7-02.png',
-      'assets/pixel/home/meadow-day-wind-v7-03.png',
-      'assets/pixel/home/meadow-day-wind-v7-04.png',
-      'assets/pixel/home/meadow-day-wind-v7-05.png',
-      'assets/pixel/home/meadow-day-wind-v7-06.png',
-      'assets/pixel/home/meadow-day-wind-v7-07.png'
-    ]
-  };
-  const dayFrameDurations = [1120, 180, 180, 300, 220, 180, 620, 260];
   const nightFrames = {
     'tree-sway': [
-      'assets/pixel/home/tree-sway-v1-00.png',
-      'assets/pixel/home/tree-sway-v1-01.png',
-      'assets/pixel/home/tree-sway-v1-02.png',
-      'assets/pixel/home/tree-sway-v1-03.png'
+      ...nightTreeWindFrames
     ],
     'meadow-sway': [
       'assets/pixel/home/meadow-sway-v2-00.png',
@@ -1419,22 +1737,24 @@ function startSceneStudioAnimation(studio, config) {
       'assets/pixel/home/meadow-sway-v2-02.png'
     ]
   };
-  const dayWindStrength = Math.max(1, Math.min(3, Math.round(config['day-wind-strength'] || 2)));
-  const dayFrameSequence = dayWindStrength === 1 ? [0, 0, 1, 2, 1, 0, 0, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
-  const frames = isDaySceneStudio ? (dayWindStrength === 3 ? strongDayFrames : dayFrames) : nightFrames;
+  const frames = nightFrames;
   const animatedImages = [...studio.querySelectorAll('[data-studio-animation]')];
   const saberImages = animatedImages.filter((image) => image.dataset.studioAnimation === 'saber-idle');
   const saberEyes = [...studio.querySelectorAll('[data-saber-eye-layer]')];
-  const layers = animatedImages.filter((image) => image.dataset.studioAnimation !== 'saber-idle').map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
+  const layers = animatedImages
+    .filter((image) => image.dataset.studioAnimation !== 'saber-idle')
+    .filter((image) => !(isDaySceneStudio && ['tree-sway', 'meadow-sway'].includes(image.dataset.studioAnimation)))
+    .map((image) => ({ image, frames: frames[image.dataset.studioAnimation] }));
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const restartDayTreeWind = isDaySceneStudio ? startDaySceneTreeWind(studio, config) : () => {};
+  const restartDayGroundWind = isDaySceneStudio ? startDaySceneGroundWind(studio, config) : () => {};
   let frameIndex = 0;
   let timer = 0;
 
   const render = () => {
     layers.forEach((layer) => {
       if (!layer.frames) return;
-      const sourceFrameIndex = isDaySceneStudio ? dayFrameSequence[frameIndex % dayFrameSequence.length] : frameIndex;
-      const frame = layer.frames[sourceFrameIndex % layer.frames.length];
+      const frame = layer.frames[frameIndex % layer.frames.length];
       layer.image.src = frame;
     });
   };
@@ -1445,14 +1765,14 @@ function startSceneStudioAnimation(studio, config) {
       frameIndex += 1;
       render();
       schedule();
-    }, isDaySceneStudio
-      ? Math.max(80, Math.round(dayFrameDurations[dayFrameSequence[frameIndex % dayFrameSequence.length]] * config['wind-frame-duration'] / 260))
-      : config['wind-frame-duration']);
+    }, config['wind-frame-duration']);
   };
   const restart = () => {
     frameIndex = 0;
     render();
     schedule();
+    restartDayTreeWind();
+    restartDayGroundWind();
   };
 
   motionPreference.addEventListener('change', restart);

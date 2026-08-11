@@ -21,9 +21,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700;6..96,800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="assets/css/dynamic-cv.css?v=0.1.81" />
-    <script src="assets/js/i18n.js?v=0.1.81" defer></script>
-    <script src="assets/js/dynamic-cv.js?v=0.1.81" defer></script>
+    <link rel="stylesheet" href="assets/css/dynamic-cv.css?v=0.1.82" />
+    <script src="assets/js/i18n.js?v=0.1.82" defer></script>
+    <script src="assets/js/day-ground-wind.js?v=0.1.82" defer></script>
+    <script src="assets/js/dynamic-cv.js?v=0.1.82" defer></script>
   </head>
   <body data-active-chapter="home" data-scroll-motion="enabled">
     <a class="skip-link" href="#main-content" data-i18n="skip.content">Skip to content</a>
@@ -35,10 +36,12 @@
         <div class="studio-sky-twinkles" aria-hidden="true"></div>
         <img class="studio-layer studio-layer-ground-foundation" data-studio-src="assets/pixel/home/ground-foundation-v6.png" data-studio-day-src="assets/pixel/home/ground-foundation-day-v1.png" alt="" />
         <div class="studio-tree">
-          <img class="studio-layer studio-layer-tree" data-studio-src="assets/pixel/home/tree-sway-v1-00.png" data-studio-day-src="assets/pixel/home/tree-day-v2.png" data-studio-animation="tree-sway" alt="" />
+          <img class="studio-layer studio-layer-tree studio-layer-tree-image" data-studio-src="assets/pixel/home/tree-sway-v2-00.png" data-studio-day-src="assets/pixel/home/tree-day-v2.png" data-studio-animation="tree-sway" alt="" />
+          <canvas class="studio-layer studio-layer-tree-wind" data-studio-day-tree-wind width="1672" height="941" hidden aria-hidden="true"></canvas>
           <div class="studio-canopy-sparkles" aria-hidden="true"></div>
         </div>
-        <img class="studio-layer studio-layer-ground" data-studio-src="assets/pixel/home/meadow-sway-v2-00.png" data-studio-day-src="assets/pixel/home/meadow-day-v1.png" data-studio-animation="meadow-sway" alt="" />
+        <img class="studio-layer studio-layer-ground studio-layer-ground-image" data-studio-src="assets/pixel/home/meadow-sway-v2-00.png" data-studio-day-src="assets/pixel/home/meadow-day-v1.png" data-studio-animation="meadow-sway" alt="" />
+        <canvas class="studio-layer studio-layer-ground studio-layer-ground-wind" data-studio-day-ground-wind width="1672" height="941" hidden aria-hidden="true"></canvas>
         <div class="studio-saber">
           <img class="studio-layer studio-layer-saber" data-studio-src="assets/pixel/home/saber-idle-chunky-v2-00.png" data-studio-animation="saber-idle" alt="" />
           <img class="studio-layer studio-layer-saber-eyes" data-saber-eye-layer src="assets/pixel/home/saber-eyes-v2-open.png" alt="" />
@@ -77,7 +80,19 @@
 
         <div class="studio-control-group studio-control-group--day-wind">
           <h2>Day wind</h2>
-          <label>Strength <input type="range" min="1" max="3" step="1" value="3" data-scene-control="day-wind-strength" /><output data-scene-value="day-wind-strength"></output></label>
+          <label>Max amplitude <input type="range" min="0" max="6" step="1" value="6" data-scene-control="day-tree-amplitude" /><output data-scene-value="day-tree-amplitude"></output></label>
+          <label>Band height <input type="range" min="4" max="32" step="2" value="4" data-scene-control="day-tree-band-height" /><output data-scene-value="day-tree-band-height"></output></label>
+          <label>Loop duration <input type="range" min="2" max="7" step="0.2" value="3" data-scene-control="day-tree-cycle-seconds" /><output data-scene-value="day-tree-cycle-seconds"></output></label>
+          <label class="studio-check-control"><span>Depth overlay</span><input type="checkbox" data-scene-control="day-tree-show-mask" /></label>
+          <div class="studio-tree-depth-key" aria-label="Tree draw order from back to front">
+            <p>Draw order · back to front</p>
+            <ol>
+              <li><span class="studio-tree-depth-swatch studio-tree-depth-swatch--back" aria-hidden="true"></span>Rear dark foliage</li>
+              <li><span class="studio-tree-depth-swatch studio-tree-depth-swatch--fixed" aria-hidden="true"></span>Fixed trunk / branches</li>
+              <li><span class="studio-tree-depth-swatch studio-tree-depth-swatch--front" aria-hidden="true"></span>Front bright foliage</li>
+            </ol>
+          </div>
+          <button class="studio-day-tree-pause" type="button" data-scene-action="day-tree-toggle-pause" aria-pressed="false">Pause tree</button>
         </div>
 
         <div class="studio-control-group">
@@ -94,7 +109,7 @@
           <label>Vertical <input type="range" min="-18" max="18" step="0.1" value="-5.2" data-scene-control="ground-y" /><output data-scene-value="ground-y"></output></label>
           <label>Size <input type="range" min="0.5" max="1.15" step="0.01" value="0.65" data-scene-control="ground-scale" /><output data-scene-value="ground-scale"></output></label>
           <label>Depth / layer <input type="range" min="1" max="5" step="1" value="5" data-scene-control="ground-layer" /><output data-scene-value="ground-layer"></output></label>
-          <label>Motion / frame <input type="range" min="180" max="900" step="20" value="180" data-scene-control="wind-frame-duration" /><output data-scene-value="wind-frame-duration"></output></label>
+          <label class="studio-wind-frame-control">Motion / frame <input type="range" min="180" max="900" step="20" value="180" data-scene-control="wind-frame-duration" /><output data-scene-value="wind-frame-duration"></output></label>
         </div>
 
         <div class="studio-actions">
@@ -105,8 +120,8 @@
       </aside>
     </section>
     <div class="scroll-meter" aria-hidden="true"><span></span></div>
-    <button class="site-build-progress" type="button" aria-haspopup="dialog" aria-controls="build-status-dialog" aria-label="Site construction progress: 45%" data-i18n-aria-label="progress.label">
-      <span data-i18n-html="progress.text">Site under construction <b>45%</b></span>
+    <button class="site-build-progress" type="button" aria-haspopup="dialog" aria-controls="build-status-dialog" aria-label="Site construction progress: 50%" data-i18n-aria-label="progress.label">
+      <span data-i18n-html="progress.text">Site under construction <b>50%</b></span>
       <span class="build-track" aria-hidden="true"><span class="build-fill"></span></span>
     </button>
 
@@ -133,7 +148,7 @@
             <div class="home-sky-twinkles home-scene-night-only" aria-hidden="true"></div>
             <img class="home-scene-layer home-scene-foundation home-scene-night-only" src="assets/pixel/home/ground-foundation-v6.png" alt="" />
             <div class="home-scene-tree-wrap home-scene-night-only">
-              <img class="home-scene-layer home-scene-tree" src="assets/pixel/home/tree-sway-v1-00.png" data-home-animation="tree-sway" alt="" />
+              <img class="home-scene-layer home-scene-tree" src="assets/pixel/home/tree-sway-v2-00.png" data-home-animation="tree-sway" alt="" />
               <div class="home-canopy-sparkles" aria-hidden="true"></div>
             </div>
             <img class="home-scene-layer home-scene-ground home-scene-night-only" src="assets/pixel/home/meadow-sway-v2-00.png" data-home-animation="meadow-sway" alt="" />
@@ -147,8 +162,9 @@
             <img class="home-scene-layer home-scene-foundation home-scene-day-only" src="assets/pixel/home/ground-foundation-day-v1.png" alt="" />
             <div class="home-scene-tree-wrap home-scene-day-only">
               <img class="home-scene-layer home-scene-tree home-scene-tree-day" src="assets/pixel/home/tree-day-v2.png" alt="" />
+              <div class="home-day-air home-scene-day-only" data-day-air-layer aria-hidden="true"></div>
             </div>
-            <img class="home-scene-layer home-scene-ground home-scene-ground-day home-scene-day-only" src="assets/pixel/home/meadow-day-wind-v6-00.png" data-home-animation="day-meadow-sway" alt="" />
+            <img class="home-scene-layer home-scene-ground home-scene-ground-day home-scene-day-only" src="assets/pixel/home/meadow-day-wind-v7-00.png" data-home-animation="day-meadow-sway" alt="" />
           </div>
         </div>
         <span class="home-signal-trail" aria-hidden="true"></span>
@@ -252,6 +268,11 @@
                 <span class="project-case-index" data-i18n="case.05">Case 05</span>
                 <span class="project-case-title" data-i18n="ophthalmic.case5.title">DIMS Myopia Prediction Statistical Model</span>
                 <span class="project-case-action"><span data-i18n="action.inDevelopment">In development</span> <span aria-hidden="true">—</span></span>
+              </article>
+              <article class="project-case-card project-case-card--placeholder" aria-label="Fundus Event Camera Experiment, pending setup" data-i18n-aria-label="ophthalmic.case6.label">
+                <span class="project-case-index" data-i18n="case.06">Case 06</span>
+                <span class="project-case-title" data-i18n="ophthalmic.case6.title">Fundus Event Camera Experiment</span>
+                <span class="project-case-action"><span data-i18n="action.pendingSetup">Pending setup</span> <span aria-hidden="true">—</span></span>
               </article>
             </div>
           </div>

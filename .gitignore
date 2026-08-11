@@ -7,6 +7,7 @@ output/
 /resume/
 /docs/*.bundle
 /design-proposal/
+/tmp/
 
 # Unused local asset exports
 /assets/brand/ysu_bw.png

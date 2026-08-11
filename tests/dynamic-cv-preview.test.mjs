@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -42,51 +42,6 @@ for y in range(1, image.height - 1):
 print(count)
 `;
 const countOpaqueBlueTreeFringePixels = (path) => Number(execFileSync('python', ['-c', opaqueBlueTreeFringePixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
-const malinoisBodyDriftPixels = `
-from PIL import Image, ImageChops
-import sys
-
-base = Image.open(sys.argv[1]).convert('RGBA')
-candidate = Image.open(sys.argv[2]).convert('RGBA')
-allowed_boxes = [(640, 280, 790, 385), (970, 335, 1150, 560)]
-base_pixels = base.load()
-candidate_pixels = candidate.load()
-drift = 0
-for y in range(base.height):
-    for x in range(base.width):
-        if any(left <= x < right and top <= y < bottom for left, top, right, bottom in allowed_boxes):
-            continue
-        if base_pixels[x, y] != candidate_pixels[x, y]:
-            drift += 1
-print(drift)
-`;
-
-const countMalinoisBodyDriftPixels = (path) => Number(execFileSync('python', ['-c', malinoisBodyDriftPixels, fileURLToPath(file('assets/pixel/home/malinois-idle-v2-00.png')), fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
-const malinoisTailSwingPixels = `
-from PIL import Image
-import sys
-
-centers = []
-for path in sys.argv[1:]:
-    image = Image.open(path).convert('RGBA')
-    pixels = [y for y in range(280, 570) for x in range(1240, 1335) if image.getpixel((x, y))[3] >= 128]
-    centers.append(sum(pixels) / len(pixels))
-print(max(centers) - min(centers))
-`;
-
-const countMalinoisTailSwingPixels = () => Number(execFileSync('python', ['-c', malinoisTailSwingPixels, ...Array.from({ length: 8 }, (_, index) => fileURLToPath(file(`assets/pixel/home/malinois-tail-v3-${String(index).padStart(2, '0')}.png`)))], { encoding: 'utf8' }).trim());
-const malinoisTonguePixels = `
-from PIL import Image
-import sys
-
-image = Image.open(sys.argv[1]).convert('RGBA')
-count = sum(1 for y in range(280, 470) for x in range(470, 670)
-            if image.getpixel((x, y))[3] >= 128 and image.getpixel((x, y))[0] > 200 and image.getpixel((x, y))[1] < 170 and image.getpixel((x, y))[2] > 100)
-print(count)
-`;
-
-const countMalinoisTonguePixels = (path) => Number(execFileSync('python', ['-c', malinoisTonguePixels, fileURLToPath(file(path))], { encoding: 'utf8' }).trim());
-
 test('ships a six-chapter scroll portfolio shell', () => {
   assert.ok(existsSync(file('index.html')), 'index.html must exist');
   const html = read('index.html');
@@ -136,7 +91,7 @@ test('opens with the approved layered night scene before the CV profile', () => 
   assert.match(html, /class="home-visual home-visual-layered"/);
   assert.match(html, /assets\/pixel\/home\/sky-night-v1\.png/);
   assert.match(html, /assets\/pixel\/home\/ground-foundation-v6\.png/);
-  assert.match(html, /assets\/pixel\/home\/tree-sway-v1-00\.png/);
+  assert.match(html, /assets\/pixel\/home\/tree-sway-v2-00\.png/);
   assert.match(html, /assets\/pixel\/home\/meadow-sway-v2-00\.png/);
   assert.match(html, /assets\/pixel\/home\/saber-idle-chunky-v2-00\.png/);
   assert.match(html, /<a href="#home" data-nav="home" data-mobile-label="Home"[^>]*><span class="chapter-nav-number">00<\/span> <span class="chapter-nav-label"[^>]*>Home<\/span><\/a>/);
@@ -226,12 +181,12 @@ test('provides a local-only Scene Studio for manually positioning the layered ni
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  for (const asset of ['assets/pixel/home/sky-night-v1.png', 'assets/pixel/home/tree-sway-v1-00.png', 'assets/pixel/home/ground-foundation-v6.png', 'assets/pixel/home/meadow-sway-v2-00.png', 'assets/pixel/home/saber-idle-chunky-v2-00.png']) {
+  for (const asset of ['assets/pixel/home/sky-night-v1.png', 'assets/pixel/home/tree-sway-v2-00.png', 'assets/pixel/home/ground-foundation-v6.png', 'assets/pixel/home/meadow-sway-v2-00.png', 'assets/pixel/home/saber-idle-chunky-v2-00.png']) {
     assert.ok(existsSync(file(asset)), `${asset} must be available to the Scene Studio`);
   }
 
   assert.match(html, /id="scene-studio"/);
-  assert.match(html, /tree-sway-v1-00\.png/);
+  assert.match(html, /tree-sway-v2-00\.png/);
   assert.match(html, /meadow-sway-v2-00\.png/);
   assert.match(html, /class="studio-layer studio-layer-ground-foundation"/);
   assert.match(html, /ground-foundation-v6\.png/);
@@ -291,30 +246,6 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   for (const asset of [
     'assets/pixel/home/sky-day-v2.png',
     'assets/pixel/home/ground-foundation-day-v1.png',
-    'assets/pixel/home/tree-day-wind-v8-00.png',
-    'assets/pixel/home/tree-day-wind-v8-01.png',
-    'assets/pixel/home/tree-day-wind-v8-02.png',
-    'assets/pixel/home/tree-day-wind-v8-03.png',
-    'assets/pixel/home/tree-day-wind-v8-04.png',
-    'assets/pixel/home/tree-day-wind-v8-05.png',
-    'assets/pixel/home/tree-day-wind-v8-06.png',
-    'assets/pixel/home/tree-day-wind-v8-07.png',
-    'assets/pixel/home/tree-day-wind-v9-00.png',
-    'assets/pixel/home/tree-day-wind-v9-01.png',
-    'assets/pixel/home/tree-day-wind-v9-02.png',
-    'assets/pixel/home/tree-day-wind-v9-03.png',
-    'assets/pixel/home/tree-day-wind-v9-04.png',
-    'assets/pixel/home/tree-day-wind-v9-05.png',
-    'assets/pixel/home/tree-day-wind-v9-06.png',
-    'assets/pixel/home/tree-day-wind-v9-07.png',
-    'assets/pixel/home/meadow-day-wind-v6-00.png',
-    'assets/pixel/home/meadow-day-wind-v6-01.png',
-    'assets/pixel/home/meadow-day-wind-v6-02.png',
-    'assets/pixel/home/meadow-day-wind-v6-03.png',
-    'assets/pixel/home/meadow-day-wind-v6-04.png',
-    'assets/pixel/home/meadow-day-wind-v6-05.png',
-    'assets/pixel/home/meadow-day-wind-v6-06.png',
-    'assets/pixel/home/meadow-day-wind-v6-07.png',
     'assets/pixel/home/meadow-day-wind-v7-00.png',
     'assets/pixel/home/meadow-day-wind-v7-01.png',
     'assets/pixel/home/meadow-day-wind-v7-02.png',
@@ -331,23 +262,20 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   assert.match(html, /data-studio-day-src="assets\/pixel\/home\/ground-foundation-day-v1\.png"/);
   assert.match(html, /data-studio-day-src="assets\/pixel\/home\/tree-day-v2\.png"/);
   assert.doesNotMatch(html, /malinois/i);
-  assert.match(html, /data-scene-control="day-wind-strength"/);
-  assert.match(html, /value="3" data-scene-control="day-wind-strength"/);
+  assert.match(html, /min="0" max="6" step="1" value="6" data-scene-control="day-tree-amplitude"/);
+  assert.match(html, /min="4" max="32" step="2" value="4" data-scene-control="day-tree-band-height"/);
+  assert.match(html, /min="2" max="7" step="0\.2" value="3" data-scene-control="day-tree-cycle-seconds"/);
+  assert.doesNotMatch(html, /data-scene-control="day-wind-strength"/);
   assert.doesNotMatch(html, /bird-day-v1|studio-day-bird/);
   assert.match(script, /searchParams\.get\('studio'\) === 'day'/);
   assert.match(script, /function prepareDaySceneStudio/);
   assert.match(script, /if \(isDaySceneStudio\) \{\s*prepareDaySceneStudio\(studio\);\s*\} else \{\s*createSkyTwinkles/s);
-  assert.match(script, /const dayFrames = \{/);
-  assert.match(script, /const dayFrameDurations = \[/);
-  assert.match(script, /const strongDayFrames = \{/);
   assert.doesNotMatch(script, /malinois/i);
-  assert.match(script, /tree-day-wind-v8-07\.png/);
-  assert.match(script, /tree-day-wind-v9-07\.png/);
-  assert.match(script, /meadow-day-wind-v6-07\.png/);
-  assert.match(script, /meadow-day-wind-v7-07\.png/);
-  assert.match(script, /const frames = isDaySceneStudio \? \(dayWindStrength === 3 \? strongDayFrames : dayFrames\) : nightFrames;/);
-  assert.match(script, /'day-wind-strength': 3,/);
-  assert.match(script, /'wind-frame-duration': 180/);
+  assert.doesNotMatch(script, /tree-day-wind-v8-07\.png|tree-day-wind-v9-07\.png/);
+  assert.equal((script.match(/'day-tree-amplitude': 6,/g) ?? []).length, 2, 'the accepted amplitude must be the initial and reset default');
+  assert.equal((script.match(/'day-tree-band-height': 4,/g) ?? []).length, 2, 'the accepted band height must be the initial and reset default');
+  assert.equal((script.match(/'day-tree-cycle-seconds': 3,/g) ?? []).length, 2, 'the accepted loop duration must be the initial and reset default');
+  assert.match(script, /'wind-frame-duration': sceneStudioWindFrameDuration/);
   assert.match(css, /body\.is-day-scene-studio \.studio-saber \{ display:\s*none;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-wind \{ display:\s*grid;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-layer-ground-foundation \{ display:\s*block;/);
@@ -356,56 +284,124 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   assert.match(css, /body\.is-day-scene-studio \.studio-layer-sky \{ filter: brightness\(\.68\) saturate\(\.72\); \}/);
 });
 
-test('keeps every animated daytime tree frame free of opaque blue background residue at its transparent edge', () => {
-  assert.equal(countOpaqueBlueTreeFringePixels('assets/pixel/home/tree-day-v2.png'), 0, 'the static day tree must not expose a blue fringe when enlarged');
-  for (const variant of ['v8', 'v9']) {
-    for (let index = 0; index < 8; index += 1) {
-      const asset = `assets/pixel/home/tree-day-wind-${variant}-${String(index).padStart(2, '0')}.png`;
-      assert.equal(countOpaqueBlueTreeFringePixels(asset), 0, `${asset} must not expose a blue fringe when enlarged`);
-    }
-  }
-});
-
-test('sways the daytime tree as one pixel-clean layer without replacement-frame seams', () => {
+test('matches the wind lab controls inside Day Scene Studio', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
-
-  assert.match(html, /<div class="home-scene-tree-wrap home-scene-day-only">\s*<img class="home-scene-layer home-scene-tree home-scene-tree-day" src="assets\/pixel\/home\/tree-day-v2\.png" alt="" \/>\s*<\/div>/s);
-  assert.doesNotMatch(html, /home-scene-tree-day-base/);
-  assert.doesNotMatch(html, /home-scene-tree-day"[^>]*data-home-animation="day-tree-sway"/);
-  assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-tree-day \{[^}]*animation:\s*home-day-tree-sway 1440ms steps\(1, end\) infinite;[^}]*transform-origin:\s*center bottom;/s);
-  assert.match(css, /@keyframes home-day-tree-sway \{[\s\S]*?33% \{ transform: translateX\(3px\); \}[\s\S]*?66% \{ transform: translateX\(1px\); \}/);
-});
-
-test('parks Malinois art assets without exposing them in the site or Scene Studio', () => {
-  const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /<input type="checkbox" data-scene-control="day-tree-show-mask" \/>/);
+  assert.match(html, /data-scene-action="day-tree-toggle-pause" aria-pressed="false">Pause tree<\/button>/);
+  assert.match(html, /class="studio-tree-depth-key"[\s\S]*Rear dark foliage[\s\S]*Fixed trunk \/ branches[\s\S]*Front bright foliage/);
+  assert.match(css, /\.studio-tree-depth-key \{/);
+  assert.match(css, /\.studio-day-tree-pause \{/);
+  assert.match(css, /body:not\(\.is-day-scene-studio\) \.studio-control-group--day-wind \{ display:\s*none; \}/);
+  assert.match(script, /bandHeight:\s*config\['day-tree-band-height'\]/);
+  assert.match(script, /maxAmplitude:\s*config\['day-tree-amplitude'\]/);
+  assert.match(script, /cycleSeconds:\s*config\['day-tree-cycle-seconds'\]/);
+  assert.match(script, /if \(config\['day-tree-show-mask'\]\) \{/);
+  assert.match(script, /const stopped = motionPreference\.matches \|\| isPaused;/);
+  assert.match(script, /pauseButton\.addEventListener\('click', \(\) => \{/);
+  assert.match(script, /key\.startsWith\('day-tree-'\)/);
+});
+
+test('renders the validated layered canopy wind inside Day Scene Studio', () => {
+  const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
 
-  assert.ok(existsSync(file('assets/pixel/home/malinois-base-v2.png')));
-  assert.doesNotMatch(html, /malinois/i);
-  assert.doesNotMatch(script, /malinois/i);
-  assert.doesNotMatch(css, /malinois/i);
-});
-
-test('ships a local cut controller for tuning the Malinois head mask before rebuilding frames', () => {
-  const cutTool = read('tools/build_malinois_head_frames.py');
-
-  for (const flag of ['--left', '--top', '--right', '--bottom', '--preview', '--write']) {
-    assert.match(cutTool, new RegExp(flag.replaceAll('-', '\\-')));
+  for (const asset of [
+    'assets/pixel/home/tree-day-pixel-wind-v2-underfill.png',
+    'assets/pixel/home/tree-day-pixel-wind-v2-back.png',
+    'assets/pixel/home/tree-day-pixel-wind-v2-fixed.png',
+    'assets/pixel/home/tree-day-pixel-wind-v2-front.png'
+  ]) {
+    assert.ok(existsSync(file(asset)), `${asset} must be available to Day Scene Studio`);
+    assert.match(script, new RegExp(asset.replaceAll('/', '\\/').replaceAll('.', '\\.')));
   }
-  assert.match(cutTool, /malinois-head-pant-v8-\{index:02d\}\.png/);
-  assert.match(cutTool, /malinois-head-pant-v8-composite-sheet\.png/);
-  assert.match(cutTool, /malinois-head-pant-v8-alpha\.png/);
+
+  assert.match(html, /<canvas class="studio-layer studio-layer-tree-wind" data-studio-day-tree-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
+  assert.match(css, /\.studio-layer-tree-wind \{[^}]*image-rendering:\s*pixelated;/s);
+  assert.match(css, /body\.is-day-scene-studio \.studio-tree\.is-day-tree-wind-ready \.studio-layer-tree-image \{ display:\s*none; \}/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-tree\.is-day-tree-wind-ready \.studio-layer-tree-wind \{ display:\s*block; \}/);
+  assert.match(script, /function startDaySceneTreeWind\(studio, config\)/);
+  assert.match(script, /maxAmplitude:\s*config\['day-tree-amplitude'\]/);
+  assert.match(script, /const elapsedSeconds = stopped \? 0 : \(now - startedAt\) \/ 1000;/);
+  assert.match(script, /context\.drawImage\(images\.underfill, 0, 0\);[\s\S]*drawStudioTreeStrips\(context, images\.back, backBands\);[\s\S]*context\.drawImage\(images\.fixed, 0, 0\);[\s\S]*drawStudioTreeStrips\(context, images\.front, frontBands\);/);
+  assert.match(script, /isDaySceneStudio && \['tree-sway', 'meadow-sway'\]\.includes\(image\.dataset\.studioAnimation\)/);
 });
 
-test('ships a rig builder that removes shared head and tail pixels from the daytime Malinois base', () => {
-  const rigTool = read('tools/build_malinois_rig.py');
+test('builds a seamless integer-pixel wind field while keeping the day grass base fixed', () => {
+  const modulePath = fileURLToPath(file('assets/js/day-ground-wind.js'));
+  assert.ok(existsSync(modulePath), 'the reusable day-grass wind field must be available');
+  const groundWind = require(modulePath);
+  const settings = {
+    height: 941,
+    bandHeight: 4,
+    maxAmplitude: 6,
+    cycleSeconds: 3,
+    topY: 680,
+    anchorY: 842,
+    activeSpan: 142
+  };
+  const still = groundWind.createBandOffsets({ ...settings, elapsedSeconds: 0 });
+  const loopEnd = groundWind.createBandOffsets({ ...settings, elapsedSeconds: 3 });
+  const active = groundWind.createBandOffsets({ ...settings, elapsedSeconds: .75 });
 
-  assert.match(rigTool, /malinois-base-v2\.png/);
-  assert.match(rigTool, /malinois-head-pant-v9-\{index:02d\}\.png/);
-  assert.match(rigTool, /TAIL_FRAME_PATTERN/);
-  assert.match(rigTool, /MOUTH_BOX/);
+  assert.deepEqual(loopEnd, still, 'the three-second loop must close on the original pixels');
+  assert.equal(still[0].sourceY, 680);
+  assert.equal(still.at(-1).sourceY + still.at(-1).sourceHeight, 842);
+  assert.ok(active.some(({ offsetX }) => offsetX !== 0), 'the grass tips must move during the loop');
+  assert.ok(active.every(({ offsetX }) => Number.isInteger(offsetX) && Math.abs(offsetX) <= 6));
+  assert.ok(active.every(({ sourceHeight }) => sourceHeight <= 4));
+  for (let index = 1; index < active.length; index += 1) {
+    assert.ok(Math.abs(active[index].offsetX - active[index - 1].offsetX) <= 1, 'adjacent grass bands must not tear apart');
+  }
+
+  const regions = groundWind.createGuardedDrawRegions(active, settings.topY, settings.anchorY, 1);
+  assert.ok(regions.every(({ sourceY, sourceHeight }) => sourceY >= 680 && sourceY + sourceHeight <= 842));
+  assert.ok(regions.slice(1).every((region, index) => region.sourceY <= regions[index].sourceY + regions[index].sourceHeight), 'guarded bands must overlap at every seam');
+  assert.equal(groundWind.FRAME_INTERVAL, 1000 / 12);
+});
+
+test('renders Day Studio grass on a fixed-base Canvas driven by the accepted tree wind controls', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.82') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.82'), 'the wind-field helper must load before the scene runtime');
+  assert.match(html, /<img class="studio-layer studio-layer-ground studio-layer-ground-image"[^>]*data-studio-day-src="assets\/pixel\/home\/meadow-day-v1\.png"/);
+  assert.match(html, /<canvas class="studio-layer studio-layer-ground studio-layer-ground-wind" data-studio-day-ground-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
+  assert.match(html, /<label class="studio-wind-frame-control">Motion \/ frame/);
+  assert.match(css, /\.studio-layer-ground-wind \{ display:\s*none;/);
+  assert.match(css, /body\.is-day-scene-studio \.scene-studio-stage\.is-day-ground-wind-ready \.studio-layer-ground-image \{ display:\s*none; \}/);
+  assert.match(css, /body\.is-day-scene-studio \.scene-studio-stage\.is-day-ground-wind-ready \.studio-layer-ground-wind \{ display:\s*block; \}/);
+  assert.match(css, /body\.is-day-scene-studio \.studio-wind-frame-control \{ display:\s*none; \}/);
+  assert.match(script, /const dayStudioGroundWindAsset = 'assets\/pixel\/home\/meadow-day-v1\.png';/);
+  assert.match(script, /function startDaySceneGroundWind\(studio, config\)/);
+  assert.match(script, /window\.dayGroundWind\.createBandOffsets\(\{/);
+  assert.match(script, /bandHeight:\s*config\['day-tree-band-height'\]/);
+  assert.match(script, /maxAmplitude:\s*config\['day-tree-amplitude'\]/);
+  assert.match(script, /cycleSeconds:\s*config\['day-tree-cycle-seconds'\]/);
+  assert.match(script, /const elapsedSeconds = motionPreference\.matches \? 0 : \(now - startedAt\) \/ 1000;/);
+  assert.match(script, /context\.imageSmoothingEnabled = false;/);
+  assert.match(script, /context\.drawImage\([\s\S]*dayGroundWind\.ANCHOR_Y,[\s\S]*canvas\.height - dayGroundWind\.ANCHOR_Y/s);
+  assert.match(script, /isDaySceneStudio && \['tree-sway', 'meadow-sway'\]\.includes\(image\.dataset\.studioAnimation\)/);
+  assert.match(script, /const restartDayGroundWind = isDaySceneStudio \? startDaySceneGroundWind\(studio, config\) : \(\) => \{\};/);
+});
+
+test('keeps the approved daytime tree free of opaque blue background residue at its transparent edge', () => {
+  assert.equal(countOpaqueBlueTreeFringePixels('assets/pixel/home/tree-day-v2.png'), 0, 'the static day tree must not expose a blue fringe when enlarged');
+});
+
+test('keeps the original day tree static until a pixel-locked IMAGE2 sprite set is approved', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /<div class="home-scene-tree-wrap home-scene-day-only">\s*<img class="home-scene-layer home-scene-tree home-scene-tree-day" src="assets\/pixel\/home\/tree-day-v2\.png" alt="" \/>\s*(?:<div class="home-day-air home-scene-day-only" data-day-air-layer aria-hidden="true"><\/div>\s*)?<\/div>/s);
+  assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-tree-day \{ filter: brightness\(1\.04\) saturate\(\.94\); \}/);
+  assert.doesNotMatch(css, /home-day-tree-sway/);
+  assert.doesNotMatch(script, /day-tree-(?:sway|leaf-sway)/);
 });
 
 test('lets Scene Studio switch between day and night without a companion control group', () => {
@@ -433,15 +429,13 @@ test('opens Scene Studio from a local file preview with clear depth controls', (
   }
 });
 
-test('uses the approved 180ms wind pace in the Scene Studio', () => {
+test('uses eight distinct night tree wind frames while keeping 180ms day and 260ms night paces in Scene Studio', () => {
   const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
 
+  const nightTreeFrames = Array.from({ length: 8 }, (_, index) => `assets/pixel/home/tree-sway-v2-${String(index).padStart(2, '0')}.png`);
   for (const asset of [
-    'assets/pixel/home/tree-sway-v1-00.png',
-    'assets/pixel/home/tree-sway-v1-01.png',
-    'assets/pixel/home/tree-sway-v1-02.png',
-    'assets/pixel/home/tree-sway-v1-03.png',
+    ...nightTreeFrames,
     'assets/pixel/home/meadow-sway-v2-00.png',
     'assets/pixel/home/meadow-sway-v2-01.png',
     'assets/pixel/home/meadow-sway-v2-02.png'
@@ -449,11 +443,19 @@ test('uses the approved 180ms wind pace in the Scene Studio', () => {
     assert.ok(existsSync(file(asset)), `${asset} must be available for the local night-wind preview`);
   }
 
+  assert.match(html, /tree-sway-v2-00\.png/);
+  assert.match(script, /const nightTreeWindFrames = Array\.from\(/);
+  assert.match(script, /tree-sway-v2-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
+  assert.doesNotMatch(script, /tree-sway-v1-0[0-3]\.png/);
   assert.match(html, /min="180" max="900" step="20" value="180" data-scene-control="wind-frame-duration"/);
   assert.match(html, /data-studio-animation="tree-sway"/);
   assert.match(html, /data-studio-animation="meadow-sway"/);
   assert.match(script, /function startSceneStudioAnimation/);
-  assert.match(script, /'wind-frame-duration': 180/);
+  assert.match(script, /const dayWindFrameDuration = 180;/);
+  assert.match(script, /const nightWindFrameDuration = 260;/);
+  assert.match(script, /const sceneStudioWindFrameDuration = isDaySceneStudio \? dayWindFrameDuration : nightWindFrameDuration;/);
+  assert.match(script, /const storageKey = isDaySceneStudio \? 'zhengji-scene-studio-day-v4' : 'zhengji-scene-studio-night-v5';/);
+  assert.match(script, /'wind-frame-duration': sceneStudioWindFrameDuration/);
 });
 
 test('animates the Saber idle sequence in both night-scene previews', () => {
@@ -505,10 +507,9 @@ test('scales the approved night scene as one responsive composition on the publi
   assert.match(css, /\.home-scene-rig \{[^}]*--home-focus-shift:[^;]+;[^}]*width:\s*max\(100%, calc\(100svh \* 1672 \/ 940\)\);/s);
   assert.match(css, /@media \(max-width: 720px\) \{[\s\S]*?\.home-scene-rig \{[^}]*top:\s*50%;[^}]*bottom:\s*auto;/);
   assert.match(script, /function startHomeSceneAnimation/);
-  assert.match(script, /const homeWindFrameDuration = 180;/);
-  assert.match(script, /const homeDayWindStrength = 3;/);
-  assert.match(script, /tree-day-wind-\$\{homeDayWindStrength === 3 \? 'v9' : 'v8'\}-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
-  assert.match(script, /meadow-day-wind-\$\{homeDayWindStrength === 3 \? 'v7' : 'v6'\}-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
+  assert.match(script, /const homeWindFrameDuration = isDayTheme \? dayWindFrameDuration : nightWindFrameDuration;/);
+  assert.doesNotMatch(script, /day-tree-(?:sway|leaf-sway)/);
+  assert.match(script, /meadow-day-wind-v7-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
 });
 
 test('switches the public portfolio between day and night from local time with explicit preview overrides', () => {
@@ -526,8 +527,12 @@ test('switches the public portfolio between day and night from local time with e
   assert.match(script, /contact:\s*\{\s*base:\s*'#a5bd93',\s*haze:\s*'#819f79'/);
   assert.match(css, /html\[data-scene-theme="day"\] \.education-panel \{[^}]*background:\s*linear-gradient\(135deg, rgb\(205 224 191 \/ 88%\), rgb\(174 203 164 \/ 78%\)\);/s);
   assert.match(css, /html\[data-scene-theme="day"\] \.chapter-nav \{ color:\s*rgb\(18 53 36 \/ 82%\); \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.chapter-nav a \{ color:\s*#102f23; \}/);
+  assert.match(css, /html\[data-scene-theme="day"\] \.chapter-home \.home-intro p:last-child,\s*html\[data-scene-theme="day"\] \.chapter-home \.enter-cv \{ color:\s*#fff; \}/);
+  assert.doesNotMatch(css, /html\[data-scene-theme="day"\] \.chapter-home \.home-intro p:last-child,\s*html\[data-scene-theme="day"\] \.chapter-home \.enter-cv \{[^}]*(?:background|border|box-shadow|text-shadow|padding):/s);
   assert.match(css, /html\[data-scene-theme="day"\] \.generated-by \{ color:\s*rgb\(27 57 38 \/ 78%\); \}/);
   assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav,[\s\S]*?color:\s*rgb\(242 247 244 \/ 72%\);/);
+  assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav a \{ color:\s*rgb\(248 247 231 \/ 88%\); \}/);
 });
 
 test('publishes the prepared daytime scene without a companion runtime', () => {
@@ -539,7 +544,7 @@ test('publishes the prepared daytime scene without a companion runtime', () => {
     'assets/pixel/home/sky-day-v2.png',
     'assets/pixel/home/ground-foundation-day-v1.png',
     'assets/pixel/home/tree-day-v2.png',
-    'assets/pixel/home/meadow-day-wind-v6-00.png'
+    'assets/pixel/home/meadow-day-wind-v7-00.png'
   ]) {
     assert.ok(existsSync(file(asset)), `${asset} must be available to the public daytime scene`);
     assert.match(html, new RegExp(asset.replaceAll('/', '\\/').replaceAll('.', '\\.')));
@@ -552,7 +557,7 @@ test('publishes the prepared daytime scene without a companion runtime', () => {
   assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-day-only \{ display:\s*block; \}/);
   assert.match(css, /html\[data-scene-theme="day"\] \.home-tree-easter-egg,[\s\S]*?\.home-saber-theme-trigger,[\s\S]*?display:\s*none;/);
   assert.match(script, /if \(!isDayTheme\) \{\s*initializeTreeEasterEgg\(reducedMotion\);\s*initializeSaberThemeEasterEgg\(\);/s);
-  assert.match(script, /'day-tree-sway':\s*Array\.from\(\{ length: 8 \}/);
+  assert.doesNotMatch(script, /'day-tree-(?:sway|leaf-sway)':/);
   assert.match(script, /'day-meadow-sway':\s*Array\.from\(\{ length: 8 \}/);
   assert.doesNotMatch(script, /malinois/i);
   assert.doesNotMatch(css, /html\[data-scene-theme="day"\] \.home-scene-tree-wrap\.home-scene-day-only \{[^}]*transform:/);
@@ -650,13 +655,14 @@ test('launches one meteor every five to ten seconds after the home chapter', () 
   assert.match(script, /const moment = time % meteorCycleDuration;/);
 });
 
-test('sends the Lunar cruiser straight across and the Hyperion down through the Background night sky', () => {
+test('sends the Lunar cruiser across the full night viewport and the Hyperion through its full diagonal', () => {
   const script = read('assets/js/dynamic-cv.js');
 
   assert.ok(existsSync(file('assets/pixel/background/hyperion-background-fleet-v4.png')));
   assert.ok(existsSync(file('assets/pixel/background/lunar-cruiser-background-fleet-v1.png')));
+  assert.match(script, /const backgroundFleetFlightDuration = 9600;/);
   assert.match(script, /const backgroundFleet = \[/);
-  assert.match(script, /src: 'assets\/pixel\/background\/hyperion-background-fleet-v4\.png', image: new Image\(\), width: 48, height: 37, startY: \.08, endY: \.68/);
+  assert.match(script, /src: 'assets\/pixel\/background\/hyperion-background-fleet-v4\.png', image: new Image\(\), width: 48, height: 37, startY: -\.16, endY: 1\.04/);
   assert.match(script, /src: 'assets\/pixel\/background\/lunar-cruiser-background-fleet-v1\.png', image: new Image\(\), width: 52, height: 24, startY: \.66, endY: \.66/);
   assert.match(script, /function drawBackgroundFleet\(time\) \{/);
   assert.match(script, /if \(isDayTheme \|\| reducedMotion\.matches \|\| activeChapter === 'home'\) return;/);
@@ -664,10 +670,10 @@ test('sends the Lunar cruiser straight across and the Hyperion down through the 
   assert.match(script, /const backgroundFleetDelay = \(\) => 24000 \+ Math\.random\(\) \* 36000;/);
   assert.match(script, /backgroundFleetState\.nextAppearanceAt = Math\.random\(\) < backgroundFleetEntryChance \? time \+ 6000 \+ Math\.random\(\) \* 12000 : Infinity;/);
   assert.match(script, /const progress = Math\.min\(1, \(time - backgroundFleetState\.startedAt\) \/ backgroundFleetFlightDuration\);/);
-  assert.match(script, /const eased = 1 - \(1 - progress\) \*\* 3;/);
-  assert.match(script, /const x = -drawWidth \+ \(width \+ drawWidth \* 2\) \* eased;/);
-  assert.match(script, /const y = Math\.round\(\(ship\.startY \+ \(ship\.endY - ship\.startY\) \* eased\) \* height\);/);
+  assert.match(script, /const x = -drawWidth \+ \(width \+ drawWidth \* 2\) \* progress;/);
+  assert.match(script, /const y = Math\.round\(\(ship\.startY \+ \(ship\.endY - ship\.startY\) \* progress\) \* height\);/);
   assert.match(script, /context\.imageSmoothingEnabled = false;/);
+  assert.match(script, /context\.globalAlpha = Math\.min\(progress \* 10, \(1 - progress\) \* 10, 1\) \* \.62;/);
   assert.match(script, /context\.drawImage\(ship\.image, Math\.round\(x\), y, drawWidth, drawHeight\);/);
   assert.match(script, /drawBackgroundFleet\(time\);/);
   assert.match(script, /if \(nextChapter !== 'home' && activeChapter === 'home'\) resetBackgroundFleet\(performance\.now\(\)\);/);
@@ -860,13 +866,13 @@ test('uses a compact handoff that leaves the lowered ground visible', () => {
   assert.match(css, /\.chapter-home::after \{[^}]*height:\s*clamp\(72px, 10vh, 128px\)[^}]*linear-gradient\(180deg, transparent 0%, #03091b 90%\)/s);
 });
 
-test('shows the living CV construction status at forty-five percent', () => {
+test('shows the living CV construction status at fifty percent', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 45%"/);
-  assert.match(html, /Site under construction <b>45%<\/b>/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*45%;/s);
+  assert.match(html, /class="site-build-progress"[^>]*aria-label="Site construction progress: 50%"/);
+  assert.match(html, /Site under construction <b>50%<\/b>/);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*50%;/s);
 });
 
 test('covers tall viewports while continuously focusing the camera on the tree and Saber', () => {
@@ -1382,6 +1388,36 @@ test('does not publish unused source or preview assets', () => {
   }
 });
 
+test('keeps the completed scene workspace free of retired visual experiments', () => {
+  const activeHomeAssets = new Set([
+    'ground-foundation-day-v1.png',
+    'ground-foundation-v6.png',
+    'meadow-day-v1.png',
+    ...Array.from({ length: 8 }, (_, index) => `meadow-day-wind-v7-${String(index).padStart(2, '0')}.png`),
+    ...Array.from({ length: 3 }, (_, index) => `meadow-sway-v2-${String(index).padStart(2, '0')}.png`),
+    'saber-eyes-v2-closed.png',
+    'saber-eyes-v2-half.png',
+    'saber-eyes-v2-open.png',
+    ...Array.from({ length: 8 }, (_, index) => `saber-idle-chunky-v2-${String(index).padStart(2, '0')}.png`),
+    'sky-day-v2.png',
+    'sky-night-v1.png',
+    'tree-day-v2.png',
+    'tree-day-pixel-wind-v2-back.png',
+    'tree-day-pixel-wind-v2-fixed.png',
+    'tree-day-pixel-wind-v2-front.png',
+    'tree-day-pixel-wind-v2-underfill.png',
+    'tree-sway-v1-00.png',
+    ...Array.from({ length: 8 }, (_, index) => `tree-sway-v2-${String(index).padStart(2, '0')}.png`)
+  ]);
+  const homeAssets = execFileSync('git', ['ls-files', 'assets/pixel/home'], { encoding: 'utf8' })
+    .split(/\r?\n/)
+    .map((path) => path.split('/').at(-1))
+    .filter((name) => /\.(?:gif|jpe?g|png|webp)$/i.test(name));
+  for (const asset of activeHomeAssets) assert.ok(homeAssets.includes(asset), `${asset} must remain in the active scene pack`);
+  assert.doesNotMatch(execFileSync('git', ['ls-files', 'tmp', 'day-scene-v2.png', 'tools'], { encoding: 'utf8' }), /\S/, 'temporary visual exports and local tooling must stay out of the published repository');
+  assert.match(read('.gitignore'), /^\/tmp\/$/m, 'future temporary renders must stay out of the worktree');
+});
+
 test('removes opaque magenta extraction residue from every Saber asset', () => {
   for (const asset of ['bio-saber-large-rice.png', 'ophthalmic-saber-glasses.png', 'industrial-saber-wrench.png']) {
     assert.equal(countOpaqueChromaPixels(`assets/scene/${asset}`), 0, `${asset} should not keep a magenta halo`);
@@ -1457,11 +1493,11 @@ test('shows the current construction progress and concise copyright footer', () 
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
 
-  assert.match(html, /aria-label="Site construction progress: 45%"/);
-  assert.match(html, /Site under construction <b>45%<\/b>/);
+  assert.match(html, /aria-label="Site construction progress: 50%"/);
+  assert.match(html, /Site under construction <b>50%<\/b>/);
   assert.match(html, /<p>© 2026 · Zhengji Liu<\/p>/);
   assert.doesNotMatch(html, /built as a living CV/);
-  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*45%;/s);
+  assert.match(css, /\.site-build-progress \.build-fill \{[^}]*width:\s*50%;/s);
   assert.match(css, /footer \{[^}]*font-size:\s*11px;/s);
 });
 
@@ -1766,14 +1802,21 @@ test('uses Ophthalmic and Industrial as scalable case indexes', () => {
   assert.equal(translations['zh-CN']['industrial.eyebrow'], '04 / 工业检测');
   assert.equal((ophthalmic.match(/class="section-statement"/g) ?? []).length, 1);
   assert.equal((industrial.match(/class="section-statement"/g) ?? []).length, 1);
-  assert.equal((ophthalmic.match(/class="project-case-card(?:\s|")/g) ?? []).length, 5);
+  assert.equal((ophthalmic.match(/class="project-case-card(?:\s|")/g) ?? []).length, 6);
   assert.equal((industrial.match(/class="project-case-card(?:\s|")/g) ?? []).length, 3);
   assert.match(ophthalmic, /Corvis ST Corneal Image Super-Resolution/);
   assert.match(ophthalmic, /OCT Choroidal Segmentation Algorithm/);
   assert.match(ophthalmic, /OCT Choroidal Vessel Segmentation Algorithm/);
   assert.match(ophthalmic, /OCT Choroidal Analysis Platform/);
   assert.match(ophthalmic, /DIMS Myopia Prediction Statistical Model/);
-  assert.equal((ophthalmic.match(/project-case-card--placeholder/g) ?? []).length, 3);
+  const eventCameraCase = ophthalmic.match(/<article class="project-case-card project-case-card--placeholder"[^>]*data-i18n-aria-label="ophthalmic\.case6\.label"[\s\S]*?<\/article>/)?.[0] ?? '';
+  assert.match(eventCameraCase, /data-i18n="case\.06">Case 06<\/span>/);
+  assert.match(eventCameraCase, /data-i18n="ophthalmic\.case6\.title">Fundus Event Camera Experiment<\/span>/);
+  assert.match(eventCameraCase, /data-i18n="action\.pendingSetup">Pending setup<\/span>/);
+  assert.doesNotMatch(eventCameraCase, /data-project-open=/);
+  assert.equal(translations['zh-CN']['ophthalmic.case6.title'], '眼底事件相机实验项目');
+  assert.equal(translations['zh-CN']['ophthalmic.case6.label'], '眼底事件相机实验项目，待建立');
+  assert.equal((ophthalmic.match(/project-case-card--placeholder/g) ?? []).length, 4);
   assert.match(industrial, /Battery Cover Terminal Weld Seam Defect Inspection/);
   assert.match(industrial, /Battery Cover Terminal Reverse-Side Adhesive Ring Defect Inspection/);
   assert.match(industrial, /Battery Cover Safety Vent Weld Seam Defect Inspection/);
@@ -1868,7 +1911,7 @@ test('uses Zhengji’s confirmed research voice across the public portfolio', ()
   assert.match(html, /We produced an explainable inspection concept and a validation plan/);
   assert.doesNotMatch(html, /I designed convolutional neural network methods|Produced an explainable inspection concept/);
   assert.match(html, /Synthesising 3D cardiac cine-MR images/);
-  assert.match(html, /Site under construction <b>45%<\/b>/);
+  assert.match(html, /Site under construction <b>50%<\/b>/);
   assert.match(html, /Vibe-coded with Codex/);
   assert.match(html, /Fata viam<br \/><i>invenient\.<\/i>/);
 });
@@ -2171,9 +2214,9 @@ test('bumps cache tokens when an animated companion layer is replaced', () => {
   const html = read('index.html');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.81');
-  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.81/);
-  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.81/);
+  assert.equal(packageJson.version, '0.1.82');
+  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.82/);
+  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.82/);
 });
 
 test('does not ship the abandoned ambient audio preview experiment', () => {
@@ -2223,9 +2266,42 @@ test('records the released daytime scene in the build log and design rules', () 
   assert.doesNotMatch(read('docs/todo.md'), /Implement a time-aware home-scene style/);
 });
 
-test('keeps the Chinese construction progress aligned with the published 45 percent status', () => {
+test('keeps the Chinese construction progress aligned with the published 50 percent status', () => {
   const { translations } = require(fileURLToPath(file('assets/js/i18n.js')));
 
-  assert.equal(translations['zh-CN']['progress.label'], '\u7f51\u7ad9\u5efa\u8bbe\u8fdb\u5ea6\uff1a45%');
-  assert.equal(translations['zh-CN']['progress.text'], '\u7f51\u7ad9\u5efa\u8bbe\u4e2d <b>45%</b>');
+  assert.equal(translations['zh-CN']['progress.label'], '\u7f51\u7ad9\u5efa\u8bbe\u8fdb\u5ea6\uff1a50%');
+  assert.equal(translations['zh-CN']['progress.text'], '\u7f51\u7ad9\u5efa\u8bbe\u4e2d <b>50%</b>');
+});
+
+test('keeps the daytime air study opt-in with canopy leaves and pixel wind traces', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /<div class="home-day-air home-scene-day-only" data-day-air-layer aria-hidden="true"><\/div>/);
+  assert.match(script, /const isDayAirPreview = isDayTheme && searchParams\.get\('qa'\) === 'day-air';/);
+  assert.match(script, /if \(isDayTheme && isDayAirPreview\) \{\s*createHomeDayAir\(homeScene\.querySelector\('\.home-day-air'\), reducedMotion\);\s*\}/);
+  assert.match(script, /function createHomeDayAir\(container, motionPreference\)/);
+  assert.match(script, /const canopyLeaves = \[/);
+  assert.match(script, /x: '54%', y: '24%'/);
+  assert.match(script, /x: '72%', y: '27%'/);
+  assert.match(script, /dy: 'clamp\(112px, 17vh, 198px\)'/);
+  assert.match(script, /buildParticle\('home-day-air-leaf'/);
+  assert.match(script, /Array\.from\(\{ length: 6 \}/);
+  assert.match(script, /motionPreference\.addEventListener\('change', build\);/);
+  assert.match(css, /\.home-day-air \{[^}]*z-index:\s*2;[^}]*pointer-events:\s*none;/s);
+  assert.match(css, /\.home-day-air-leaf \{[^}]*animation:\s*home-day-air-leaf/);
+  assert.match(css, /\.home-day-air-leaf \{[^}]*width:\s*5px;[^}]*height:\s*4px;/s);
+  assert.match(css, /\.home-day-air-trace \{[^}]*animation:\s*home-day-air-trace/);
+  assert.match(css, /@keyframes home-day-air-leaf[\s\S]*?translate3d\(calc\(var\(--air-dx\) \* 1\.08\), calc\(var\(--air-dy\) \* 1\.12\)/);
+  assert.match(css, /@keyframes home-day-air-trace[\s\S]*?100% \{ opacity: 0;/);
+  assert.doesNotMatch(script, /home-day-air-pollen/);
+});
+
+test('keeps daytime air leaves inside the transformed day-tree coordinate system', () => {
+  const html = read('index.html');
+  const treeMarkup = html.match(/<div class="home-scene-tree-wrap home-scene-day-only">([\s\S]*?)<\/div>/)?.[1] ?? '';
+
+  assert.match(treeMarkup, /home-scene-tree-day/);
+  assert.match(treeMarkup, /class="home-day-air home-scene-day-only" data-day-air-layer/);
 });
