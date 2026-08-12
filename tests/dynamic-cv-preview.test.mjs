@@ -366,7 +366,7 @@ test('renders Day Studio grass on a fixed-base Canvas driven by the accepted tre
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.84') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.84'), 'the wind-field helper must load before the scene runtime');
+  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.85') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.85'), 'the wind-field helper must load before the scene runtime');
   assert.match(html, /<img class="studio-layer studio-layer-ground studio-layer-ground-image"[^>]*data-studio-day-src="assets\/pixel\/home\/meadow-day-v1\.png"/);
   assert.match(html, /<canvas class="studio-layer studio-layer-ground studio-layer-ground-wind" data-studio-day-ground-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
   assert.match(html, /<label class="studio-wind-frame-control">Motion \/ frame/);
@@ -391,12 +391,12 @@ test('keeps the approved daytime tree free of opaque blue background residue at 
   assert.equal(countOpaqueBlueTreeFringePixels('assets/pixel/home/tree-day-v2.png'), 0, 'the static day tree must not expose a blue fringe when enlarged');
 });
 
-test('keeps the original day tree static until a pixel-locked IMAGE2 sprite set is approved', () => {
+test('keeps the original day tree as the loading fallback for the pixel-locked canvas wind', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  assert.match(html, /<div class="home-scene-tree-wrap home-scene-day-only">\s*<img class="home-scene-layer home-scene-tree home-scene-tree-day" src="assets\/pixel\/home\/tree-day-v2\.png" alt="" \/>\s*(?:<div class="home-day-air home-scene-day-only" data-day-air-layer aria-hidden="true"><\/div>\s*)?<\/div>/s);
+  assert.match(html, /<div class="home-scene-tree-wrap home-scene-day-only">\s*<img class="[^"]*home-scene-tree-day-static[^"]*" src="assets\/pixel\/home\/tree-day-v2\.png" alt="" \/>\s*<canvas class="[^"]*home-scene-tree-day-wind[^"]*" data-home-day-tree-wind[^>]*><\/canvas>/s);
   assert.match(css, /html\[data-scene-theme="day"\] \.home-scene-tree-day \{ filter: brightness\(1\.04\) saturate\(\.94\); \}/);
   assert.doesNotMatch(css, /home-day-tree-sway/);
   assert.doesNotMatch(script, /day-tree-(?:sway|leaf-sway)/);
@@ -510,6 +510,20 @@ test('scales the approved night scene as one responsive composition on the publi
   assert.match(script, /meadow-day-wind-v7-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
 });
 
+test('runs the approved layered daytime tree wind on the public homepage', () => {
+  const html = read('index.html');
+  const css = read('assets/css/dynamic-cv.css');
+  const script = read('assets/js/dynamic-cv.js');
+
+  assert.match(html, /class="[^"]*home-scene-tree-day-static[^"]*"[^>]*src="assets\/pixel\/home\/tree-day-v2\.png"/);
+  assert.match(html, /<canvas class="[^"]*home-scene-tree-day-wind[^"]*" data-home-day-tree-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
+  assert.match(css, /\.is-home-day-tree-wind-ready \.home-scene-tree-day-static \{ display:\s*none; \}/);
+  assert.match(css, /\.is-home-day-tree-wind-ready \.home-scene-tree-day-wind \{ display:\s*block; \}/);
+  assert.match(script, /const homeDayTreeWindConfig = Object\.freeze\(\{\s*bandHeight:\s*4,\s*maxAmplitude:\s*6,\s*cycleSeconds:\s*3\s*\}\);/s);
+  assert.match(script, /function startHomeDayTreeWind\(motionPreference\)/);
+  assert.match(script, /startHomeDayTreeWind\(motionPreference\);/);
+});
+
 test('switches the public portfolio between day and night from local time with explicit preview overrides', () => {
   const html = read('index.html');
   const css = read('assets/css/dynamic-cv.css');
@@ -531,6 +545,21 @@ test('switches the public portfolio between day and night from local time with e
   assert.match(css, /html\[data-scene-theme="day"\] \.generated-by \{ color:\s*rgb\(27 57 38 \/ 78%\); \}/);
   assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav,[\s\S]*?color:\s*rgb\(242 247 244 \/ 72%\);/);
   assert.match(css, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav a \{ color:\s*rgb\(248 247 231 \/ 88%\); \}/);
+});
+
+test('uses a white fill and readable gold chapter numbers in the daytime compact mobile navigation', () => {
+  const css = read('assets/css/dynamic-cv.css');
+  const mobileNavigationStyles = css.slice(
+    css.indexOf('@media (max-width: 720px) {'),
+    css.indexOf('@media (max-width: 760px) {')
+  );
+
+  assert.match(css, /html\[data-scene-theme="day"\] \.chapter-nav a \{ color:\s*#102f23; \}/);
+  assert.match(mobileNavigationStyles, /html\[data-scene-theme="day"\] \.chapter-nav \{ border-color:\s*#fff;[^}]*background:\s*#fff; \}/);
+  assert.match(mobileNavigationStyles, /html\[data-scene-theme="day"\] \.chapter-nav a \{ color:\s*#8f671e; \}/);
+  assert.match(mobileNavigationStyles, /html\[data-scene-theme="day"\] \.chapter-nav-number \{ color:\s*currentColor; \}/);
+  assert.match(mobileNavigationStyles, /html\[data-scene-theme="day"\] \.chapter-nav a:hover,\s*html\[data-scene-theme="day"\] \.chapter-nav a\[aria-current="true"\] \{ color:\s*#8f671e; border-color:\s*#8f671e; \}/);
+  assert.match(mobileNavigationStyles, /html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav a,\s*html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav a:hover,\s*html\[data-scene-theme="day"\] body\[data-active-chapter="home"\] \.chapter-nav a\[aria-current="true"\] \{ color:\s*#8f671e; \}/);
 });
 
 test('publishes the prepared daytime scene without a companion runtime', () => {
@@ -2259,9 +2288,9 @@ test('bumps cache tokens when an animated companion layer is replaced', () => {
   const html = read('index.html');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.84');
-  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.84/);
-  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.84/);
+  assert.equal(packageJson.version, '0.1.85');
+  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.85/);
+  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.85/);
 });
 
 test('does not ship the abandoned ambient audio preview experiment', () => {

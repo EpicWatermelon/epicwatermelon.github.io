@@ -17,6 +17,11 @@ const dayStudioTreeWindAssets = Object.freeze({
   fixed: 'assets/pixel/home/tree-day-pixel-wind-v2-fixed.png',
   front: 'assets/pixel/home/tree-day-pixel-wind-v2-front.png'
 });
+const homeDayTreeWindConfig = Object.freeze({
+  bandHeight: 4,
+  maxAmplitude: 6,
+  cycleSeconds: 3
+});
 const dayStudioTreeWindCanopyBottom = 700;
 const dayStudioTreeWindFrameInterval = 1000 / 12;
 const dayStudioTreeWindSeamGuard = 1;
@@ -183,6 +188,7 @@ function startHomeSceneAnimation(motionPreference) {
   let frameIndex = 0;
   let timer = 0;
 
+  if (isDayTheme) startHomeDayTreeWind(motionPreference);
   if (!layers.length && !saberImages.length) return;
 
   const render = () => {
@@ -1305,6 +1311,82 @@ function drawStudioTreeStrips(context, image, bands, alpha = 1) {
     );
   }
   context.globalAlpha = 1;
+}
+
+function startHomeDayTreeWind(motionPreference) {
+  const canvas = document.querySelector('[data-home-day-tree-wind]');
+  if (!isDayTheme || !canvas) return;
+
+  const context = canvas.getContext('2d', { alpha: true });
+  const tree = canvas.closest('.home-scene-tree-wrap');
+  const images = {};
+  let isReady = false;
+  let startedAt = performance.now();
+  let lastPaintAt = -Infinity;
+  let animationFrame = 0;
+
+  const loadImage = (source) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.addEventListener('load', () => resolve(image), { once: true });
+    image.addEventListener('error', () => reject(new Error(`Unable to load ${source}`)), { once: true });
+    image.src = source;
+  });
+
+  const render = (now) => {
+    if (!isReady) return;
+    const elapsedSeconds = motionPreference.matches ? 0 : (now - startedAt) / 1000;
+    const settings = {
+      height: canvas.height,
+      bandHeight: homeDayTreeWindConfig.bandHeight,
+      maxAmplitude: homeDayTreeWindConfig.maxAmplitude,
+      cycleSeconds: homeDayTreeWindConfig.cycleSeconds,
+      elapsedSeconds,
+      canopyBottom: dayStudioTreeWindCanopyBottom
+    };
+    const backBands = createStudioTreeLayerOffsets({ ...settings, layer: 'back' });
+    const frontBands = createStudioTreeLayerOffsets({ ...settings, layer: 'front' });
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(images.underfill, 0, 0);
+    drawStudioTreeStrips(context, images.back, backBands);
+    context.drawImage(images.fixed, 0, 0);
+    drawStudioTreeStrips(context, images.front, frontBands);
+  };
+
+  const tick = (now) => {
+    if (now - lastPaintAt >= dayStudioTreeWindFrameInterval) {
+      render(now);
+      lastPaintAt = now;
+    }
+    animationFrame = window.requestAnimationFrame(tick);
+  };
+
+  const restart = () => {
+    startedAt = performance.now();
+    lastPaintAt = -Infinity;
+    window.cancelAnimationFrame(animationFrame);
+    render(startedAt);
+    if (!motionPreference.matches) animationFrame = window.requestAnimationFrame(tick);
+  };
+
+  Promise.all(Object.entries(dayStudioTreeWindAssets).map(async ([key, source]) => {
+    images[key] = await loadImage(source);
+  })).then(() => {
+    canvas.width = images.fixed.naturalWidth;
+    canvas.height = images.fixed.naturalHeight;
+    context.imageSmoothingEnabled = false;
+    isReady = true;
+    canvas.hidden = false;
+    tree?.classList.add('is-home-day-tree-wind-ready');
+    restart();
+  }).catch(() => {
+    canvas.hidden = true;
+    tree?.classList.remove('is-home-day-tree-wind-ready');
+  });
+
+  motionPreference.addEventListener('change', restart);
+  window.addEventListener('pagehide', () => window.cancelAnimationFrame(animationFrame), { once: true });
 }
 
 function startDaySceneTreeWind(studio, config) {

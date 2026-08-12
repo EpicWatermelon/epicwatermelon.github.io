@@ -463,6 +463,9 @@ html[data-scene-theme="day"] .home-scene-day-only { display: block; }
 html[data-scene-theme="day"] .home-scene-sky.home-scene-day-only { filter: brightness(1.08) saturate(.92); }
 html[data-scene-theme="day"] .home-scene-foundation.home-scene-day-only { filter: brightness(.98) saturate(.9); }
 html[data-scene-theme="day"] .home-scene-tree-day { filter: brightness(1.04) saturate(.94); }
+html[data-scene-theme="day"] .home-scene-tree-day-wind { display: none; }
+html[data-scene-theme="day"] .is-home-day-tree-wind-ready .home-scene-tree-day-static { display: none; }
+html[data-scene-theme="day"] .is-home-day-tree-wind-ready .home-scene-tree-day-wind { display: block; }
 html[data-scene-theme="day"] .home-scene-ground-day { filter: brightness(1.04) saturate(.92); }
 html[data-scene-theme="day"] .home-sky-twinkles,
 html[data-scene-theme="day"] .home-canopy-sparkles { display: none; }
@@ -1476,6 +1479,14 @@ html[data-scene-theme="day"] .contact-links a:hover { color: #eff5ea; background
   .chapter-nav-number { display: inline; }
   .chapter-nav-label { display: none; }
   .chapter-nav a:hover, .chapter-nav a[aria-current="true"] { border-color: var(--gold); transform: none; }
+  html[data-scene-theme="day"] .chapter-nav { border-color: #fff; background: #fff; }
+  html[data-scene-theme="day"] .chapter-nav a { color: #8f671e; }
+  html[data-scene-theme="day"] .chapter-nav-number { color: currentColor; }
+  html[data-scene-theme="day"] .chapter-nav a:hover,
+  html[data-scene-theme="day"] .chapter-nav a[aria-current="true"] { color: #8f671e; border-color: #8f671e; }
+  html[data-scene-theme="day"] body[data-active-chapter="home"] .chapter-nav a,
+  html[data-scene-theme="day"] body[data-active-chapter="home"] .chapter-nav a:hover,
+  html[data-scene-theme="day"] body[data-active-chapter="home"] .chapter-nav a[aria-current="true"] { color: #8f671e; }
   .site-build-progress { top: 22px; left: 22px; }
   .chapter { display: block; min-height: 100svh; padding: 62px 22px 105px; }
   .chapter-home { display: block; min-height: 100svh; padding: 0; }
