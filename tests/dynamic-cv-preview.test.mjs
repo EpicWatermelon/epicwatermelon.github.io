@@ -272,10 +272,8 @@ test('previews the combined daytime environmental study in local Scene Studio', 
   assert.match(script, /if \(isDaySceneStudio\) \{\s*prepareDaySceneStudio\(studio\);\s*\} else \{\s*createSkyTwinkles/s);
   assert.doesNotMatch(script, /malinois/i);
   assert.doesNotMatch(script, /tree-day-wind-v8-07\.png|tree-day-wind-v9-07\.png/);
-  assert.equal((script.match(/'day-tree-amplitude': 6,/g) ?? []).length, 2, 'the accepted amplitude must be the initial and reset default');
-  assert.equal((script.match(/'day-tree-band-height': 4,/g) ?? []).length, 2, 'the accepted band height must be the initial and reset default');
-  assert.equal((script.match(/'day-tree-cycle-seconds': 3,/g) ?? []).length, 2, 'the accepted loop duration must be the initial and reset default');
-  assert.match(script, /'wind-frame-duration': sceneStudioWindFrameDuration/);
+  assert.match(script, /const sceneStudioWindDefaults = isDaySceneStudio\s*\?\s*\{\s*'day-tree-amplitude': 6,\s*'day-tree-band-height': 4,\s*'day-tree-cycle-seconds': 3,\s*'day-tree-show-mask': false,\s*'wind-frame-duration': dayWindFrameDuration\s*\}\s*:\s*\{\s*'day-tree-amplitude': 3,\s*'day-tree-band-height': 8,\s*'day-tree-cycle-seconds': 3\.6,\s*'day-tree-show-mask': false,\s*'wind-frame-duration': nightWindFrameDuration\s*\}/s);
+  assert.equal((script.match(/\.\.\.sceneStudioWindDefaults/g) ?? []).length, 2, 'initialization and reset must use the approved mode-specific wind defaults');
   assert.match(css, /body\.is-day-scene-studio \.studio-saber \{ display:\s*none;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-control-group--day-wind \{ display:\s*grid;/);
   assert.match(css, /body\.is-day-scene-studio \.studio-layer-ground-foundation \{ display:\s*block;/);
@@ -368,7 +366,7 @@ test('renders Day Studio grass on a fixed-base Canvas driven by the accepted tre
   const css = read('assets/css/dynamic-cv.css');
   const script = read('assets/js/dynamic-cv.js');
 
-  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.83') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.83'), 'the wind-field helper must load before the scene runtime');
+  assert.ok(html.indexOf('assets/js/day-ground-wind.js?v=0.1.84') < html.indexOf('assets/js/dynamic-cv.js?v=0.1.84'), 'the wind-field helper must load before the scene runtime');
   assert.match(html, /<img class="studio-layer studio-layer-ground studio-layer-ground-image"[^>]*data-studio-day-src="assets\/pixel\/home\/meadow-day-v1\.png"/);
   assert.match(html, /<canvas class="studio-layer studio-layer-ground studio-layer-ground-wind" data-studio-day-ground-wind width="1672" height="941" hidden aria-hidden="true"><\/canvas>/);
   assert.match(html, /<label class="studio-wind-frame-control">Motion \/ frame/);
@@ -429,7 +427,7 @@ test('opens Scene Studio from a local file preview with clear depth controls', (
   }
 });
 
-test('uses eight distinct night tree wind frames while keeping 180ms day and 260ms night paces in Scene Studio', () => {
+test('uses eight distinct night tree wind frames while keeping 180ms day and 240ms night paces in Scene Studio', () => {
   const html = read('index.html');
   const script = read('assets/js/dynamic-cv.js');
 
@@ -447,15 +445,15 @@ test('uses eight distinct night tree wind frames while keeping 180ms day and 260
   assert.match(script, /const nightTreeWindFrames = Array\.from\(/);
   assert.match(script, /tree-sway-v2-\$\{String\(index\)\.padStart\(2, '0'\)\}\.png/);
   assert.doesNotMatch(script, /tree-sway-v1-0[0-3]\.png/);
-  assert.match(html, /min="180" max="900" step="20" value="180" data-scene-control="wind-frame-duration"/);
+  assert.match(html, /min="180" max="900" step="20" value="240" data-scene-control="wind-frame-duration"/);
   assert.match(html, /data-studio-animation="tree-sway"/);
   assert.match(html, /data-studio-animation="meadow-sway"/);
   assert.match(script, /function startSceneStudioAnimation/);
   assert.match(script, /const dayWindFrameDuration = 180;/);
-  assert.match(script, /const nightWindFrameDuration = 260;/);
-  assert.match(script, /const sceneStudioWindFrameDuration = isDaySceneStudio \? dayWindFrameDuration : nightWindFrameDuration;/);
-  assert.match(script, /const storageKey = isDaySceneStudio \? 'zhengji-scene-studio-day-v4' : 'zhengji-scene-studio-night-v5';/);
-  assert.match(script, /'wind-frame-duration': sceneStudioWindFrameDuration/);
+  assert.match(script, /const nightWindFrameDuration = 240;/);
+  assert.match(script, /const storageKey = isDaySceneStudio \? 'zhengji-scene-studio-day-v5' : 'zhengji-scene-studio-night-v6';/);
+  assert.match(script, /'wind-frame-duration': dayWindFrameDuration/);
+  assert.match(script, /'wind-frame-duration': nightWindFrameDuration/);
 });
 
 test('animates the Saber idle sequence in both night-scene previews', () => {
@@ -1442,6 +1440,22 @@ test('keeps the completed scene workspace free of retired visual experiments', (
   assert.equal(retiredAssets.length, 0, `retired home assets remain: ${retiredAssets.slice(0, 12).join(', ')}`);
   assert.equal(existsSync(file('tmp')), false, 'temporary visual exports must be removed after approval');
   assert.equal(existsSync(file('day-scene-v2.png')), false, 'the root-level Day Studio capture must be removed after approval');
+  for (const artifact of [
+    'output',
+    'design-proposal',
+    'assets/brand/ysu_bw.png',
+    'assets/papers/corvis-figure-1.jpg',
+    'assets/papers/corvis-figure-2.jpg',
+    'assets/papers/corvis-figure-3.jpg',
+    'assets/papers/corvis-figure-4.jpg',
+    'assets/papers/corvis-figure-6.jpg',
+    'assets/papers/corvis-figure-7.jpg',
+    'assets/papers/corvis-figure-8.jpg',
+    'assets/papers/dims-figure-3.png',
+    'assets/scene/Personal website.lnk'
+  ]) {
+    assert.equal(existsSync(file(artifact)), false, `${artifact} belongs to a retired visual workspace`);
+  }
   for (const tool of ['tools/build_malinois_head_frames.py', 'tools/build_malinois_rig.py', 'tools/clean_tree_day_fringes.py']) {
     assert.equal(existsSync(file(tool)), false, `${tool} belongs to a retired experiment`);
   }
@@ -2245,9 +2259,9 @@ test('bumps cache tokens when an animated companion layer is replaced', () => {
   const html = read('index.html');
   const packageJson = JSON.parse(read('package.json'));
 
-  assert.equal(packageJson.version, '0.1.83');
-  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.83/);
-  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.83/);
+  assert.equal(packageJson.version, '0.1.84');
+  assert.match(html, /assets\/js\/dynamic-cv\.js\?v=0\.1\.84/);
+  assert.match(html, /assets\/css\/dynamic-cv\.css\?v=0\.1\.84/);
 });
 
 test('does not ship the abandoned ambient audio preview experiment', () => {

@@ -124,17 +124,89 @@ for path in sys.argv[2:]:
     assert frame.size == source.size
     frame_alpha = frame.getchannel('A').load()
     missing = 0
-    for y in range(max(0, centre_y - radius_y), min(source.height, centre_y + radius_y + 1)):
+    for y in range(max(0, centre_y - radius_y), min(source.height, 680)):
         normalized_y = (y - centre_y) / radius_y
         for x in range(max(0, centre_x - radius_x), min(source.width, centre_x + radius_x + 1)):
             normalized_x = (x - centre_x) / radius_x
-            if normalized_x * normalized_x + normalized_y * normalized_y >= 1:
+            inside_upper_canopy = normalized_x * normalized_x + normalized_y * normalized_y < 1
+            inside_lower_canopy = 950 <= x < 1320 and 500 <= y < 680
+            if not inside_upper_canopy and not inside_lower_canopy:
                 continue
             if source_alpha[x, y] > 0 and frame_alpha[x, y] == 0:
                 missing += 1
     counts.append(missing)
 
 print(json.dumps(counts))
+`;
+
+const nightInnerCanopyMotionAudit = String.raw`
+import json
+from PIL import Image
+import sys
+
+source = Image.open(sys.argv[1]).convert('RGBA')
+frame = Image.open(sys.argv[2]).convert('RGBA')
+assert source.size == frame.size
+
+inner_box = (950, 500, 1320, 680)
+trunk_box = (1035, 680, 1240, 930)
+
+def count_changes(box, predicate):
+    original = list(source.crop(box).get_flattened_data())
+    animated = list(frame.crop(box).get_flattened_data())
+    eligible = 0
+    changed = 0
+    for before, after in zip(original, animated):
+        if not predicate(before):
+            continue
+        eligible += 1
+        if before != after:
+            changed += 1
+    return eligible, changed
+
+def cool_leaf(pixel):
+    red, green, blue, alpha = pixel
+    return alpha > 0 and not (red >= green + 7 and red >= blue + 7)
+
+def opaque(pixel):
+    return pixel[3] > 0
+
+def warm_bark(pixel):
+    red, green, blue, alpha = pixel
+    return alpha > 0 and red >= green + 7 and red >= blue + 7
+
+def near_warm_bark(x, y, radius=2):
+    for offset_y in range(-radius, radius + 1):
+        for offset_x in range(-radius, radius + 1):
+            next_x = x + offset_x
+            next_y = y + offset_y
+            if 0 <= next_x < source.width and 0 <= next_y < source.height and warm_bark(source.getpixel((next_x, next_y))):
+                return True
+    return False
+
+inner_count, inner_changed = count_changes(inner_box, cool_leaf)
+trunk_count, trunk_changed = count_changes(trunk_box, opaque)
+branch_outline_count = 0
+branch_outline_changed = 0
+branch_box = (700, 360, 1500, 680)
+for y in range(branch_box[1], branch_box[3]):
+    for x in range(branch_box[0], branch_box[2]):
+        before = source.getpixel((x, y))
+        if before[3] == 0 or warm_bark(before) or not near_warm_bark(x, y):
+            continue
+        branch_outline_count += 1
+        if before != frame.getpixel((x, y)):
+            branch_outline_changed += 1
+
+print(json.dumps({
+    'inner_count': inner_count,
+    'inner_changed': inner_changed,
+    'inner_changed_ratio': inner_changed / max(1, inner_count),
+    'trunk_count': trunk_count,
+    'trunk_changed': trunk_changed,
+    'branch_outline_count': branch_outline_count,
+    'branch_outline_changed': branch_outline_changed,
+}))
 `;
 
 test('ships an isolated daytime tree wind lab with the requested controls', () => {
@@ -259,4 +331,17 @@ test('keeps night sky from opening inside the moving canopy', () => {
 
   const missingByFrame = JSON.parse(execFileSync('python', ['-c', nightCanopyGapAudit, ...[source, ...movingFrames].map((path) => fileURLToPath(file(path)))], { encoding: 'utf8' }));
   assert.deepEqual(missingByFrame, [0, 0, 0, 0, 0, 0], `moving night frames expose sky inside the canopy: ${missingByFrame.join(', ')}`);
+});
+
+test('moves inner night foliage while keeping the lower trunk pixel-locked', () => {
+  const source = 'assets/pixel/home/tree-sway-v2-00.png';
+  const peakFrame = 'assets/pixel/home/tree-sway-v2-02.png';
+  const audit = JSON.parse(execFileSync('python', ['-c', nightInnerCanopyMotionAudit, fileURLToPath(file(source)), fileURLToPath(file(peakFrame))], { encoding: 'utf8' }));
+
+  assert.ok(audit.inner_count > 35_000, `the inner-canopy sample is unexpectedly sparse: ${audit.inner_count}`);
+  assert.ok(audit.inner_changed_ratio >= 0.08, `the inner night foliage still reads as static: ${audit.inner_changed_ratio}`);
+  assert.ok(audit.trunk_count > 20_000, `the fixed trunk sample is unexpectedly sparse: ${audit.trunk_count}`);
+  assert.equal(audit.trunk_changed, 0, `the lower trunk must remain pixel-locked: ${audit.trunk_changed}`);
+  assert.ok(audit.branch_outline_count > 8_000, `the upper-branch outline sample is unexpectedly sparse: ${audit.branch_outline_count}`);
+  assert.equal(audit.branch_outline_changed, 0, `dark outlines attached to fixed branches must remain pixel-locked: ${audit.branch_outline_changed}`);
 });

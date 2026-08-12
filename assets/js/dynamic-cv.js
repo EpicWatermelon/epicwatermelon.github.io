@@ -6,8 +6,7 @@ const isLocalStudioPreview = ['127.0.0.1', 'localhost', '[::1]'].includes(window
 const isDaySceneStudio = Boolean(sceneStudio && isLocalStudioPreview && searchParams.get('studio') === 'day');
 const isSceneStudioMode = Boolean(sceneStudio && isLocalStudioPreview && (searchParams.get('studio') === '1' || searchParams.get('studio') === 'day'));
 const dayWindFrameDuration = 180;
-const nightWindFrameDuration = 260;
-const sceneStudioWindFrameDuration = isDaySceneStudio ? dayWindFrameDuration : nightWindFrameDuration;
+const nightWindFrameDuration = 240;
 const nightTreeWindFrames = Array.from(
   { length: 8 },
   (_, index) => `assets/pixel/home/tree-sway-v2-${String(index).padStart(2, '0')}.png`
@@ -1559,7 +1558,22 @@ function initializeSceneStudio(studio) {
   const inputs = [...studio.querySelectorAll('[data-scene-control]')];
   const status = studio.querySelector('[data-scene-status]');
   const canopySparkles = studio.querySelector('.studio-canopy-sparkles');
-  const storageKey = isDaySceneStudio ? 'zhengji-scene-studio-day-v4' : 'zhengji-scene-studio-night-v5';
+  const storageKey = isDaySceneStudio ? 'zhengji-scene-studio-day-v5' : 'zhengji-scene-studio-night-v6';
+  const sceneStudioWindDefaults = isDaySceneStudio
+    ? {
+        'day-tree-amplitude': 6,
+        'day-tree-band-height': 4,
+        'day-tree-cycle-seconds': 3,
+        'day-tree-show-mask': false,
+        'wind-frame-duration': dayWindFrameDuration
+      }
+    : {
+        'day-tree-amplitude': 3,
+        'day-tree-band-height': 8,
+        'day-tree-cycle-seconds': 3.6,
+        'day-tree-show-mask': false,
+        'wind-frame-duration': nightWindFrameDuration
+      };
   const sceneStudioConfig = {
     'tree-x': 22.8,
     'tree-y': 18.6,
@@ -1580,11 +1594,7 @@ function initializeSceneStudio(studio) {
     'ground-y': -5.2,
     'ground-scale': 0.65,
     'ground-layer': 5,
-    'day-tree-amplitude': 6,
-    'day-tree-band-height': 4,
-    'day-tree-cycle-seconds': 3,
-    'day-tree-show-mask': false,
-    'wind-frame-duration': sceneStudioWindFrameDuration
+    ...sceneStudioWindDefaults
   };
   const properties = {
     'tree-x': '--tree-x',
@@ -1700,11 +1710,7 @@ function initializeSceneStudio(studio) {
       'ground-y': -5.2,
       'ground-scale': 0.65,
       'ground-layer': 5,
-      'day-tree-amplitude': 6,
-      'day-tree-band-height': 4,
-      'day-tree-cycle-seconds': 3,
-      'day-tree-show-mask': false,
-      'wind-frame-duration': sceneStudioWindFrameDuration
+      ...sceneStudioWindDefaults
     });
     renderSceneStudio();
     restartSceneStudioAnimation();
